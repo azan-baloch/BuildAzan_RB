@@ -1,0 +1,28 @@
+# Ignore .class files
+*.class
+
+# Ignore application.properties file
+application.properties
+
+# Ignore VS Code related files
+.vscode/
+
+.classpath
+
+.factorypath
+
+.project
+
+.settings
+
+.eclipse/
+
+.idea/
+
+target/
+
+logs/
+
+tmp/
+
+temp/
