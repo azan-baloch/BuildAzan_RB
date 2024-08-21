@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.buildazan.service.VerifcationService;
-import com.buildazan.service.impl.UserServiceImpl;
+import com.buildazan.service.UserService;
+import com.buildazan.service.VerificationService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -21,10 +21,10 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/user")
 public class UserController {
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    private UserService userServiceImpl;
 
     @Autowired
-    private VerifcationService verifcationService;
+    private VerificationService verifcationService;
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -41,19 +41,19 @@ public class UserController {
     //     return ResponseEntity.ok(codeSent);
     // }
 
-    @PostMapping("/update-email")
-    public ResponseEntity<String> updateUserEmail(@RequestBody Map<String, String> payload, HttpSession session) {
-        if (verifcationService.verifyCode((String) session.getAttribute("verificationCode"),
-                payload.get("verificationCode"))) {
-            if (!verifcationService.checkCodeExpiration((LocalDateTime) session.getAttribute("expirationTime"))) {
-                return ResponseEntity.ok("Verification code expire, request new one");
-            }
-            userServiceImpl.updateEmailByEmail(payload.get("id"), payload.get("newEmail"));
-            return ResponseEntity.ok("Email updated successfully");
-        } else {
-            return ResponseEntity.ok("Verifictaion code is wrong");
-        }
-    }
+    // @PostMapping("/update-email")
+    // public ResponseEntity<String> updateUserEmail(@RequestBody Map<String, String> payload, HttpSession session) {
+    //     if (verifcationService.verifyCode((String) session.getAttribute("verificationCode"),
+    //             payload.get("verificationCode"))) {
+    //         if (!verifcationService.checkCodeExpiration((LocalDateTime) session.getAttribute("expirationTime"))) {
+    //             return ResponseEntity.ok("Verification code expire, request new one");
+    //         }
+    //         userServiceImpl.updateEmailByEmail(payload.get("id"), payload.get("newEmail"));
+    //         return ResponseEntity.ok("Email updated successfully");
+    //     } else {
+    //         return ResponseEntity.ok("Verifictaion code is wrong");
+    //     }
+    // }
 
     @PostMapping("/update-general-details")
     public ResponseEntity<String> updateUserGeneralDetails(@RequestBody Map<String, Object> userDetails) {

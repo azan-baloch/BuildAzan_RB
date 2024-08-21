@@ -3,6 +3,8 @@ package com.buildazan.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -57,7 +59,7 @@ public class SecurityConfig {
 		config.setAllowCredentials(true);
 		config.addAllowedOrigin("http://localhost:5173/");
 		config.addAllowedHeader("*");
-		config.addAllowedMethod("*");
+		config.addAllowedMethod("*");	
 		source.registerCorsConfiguration("/**", config);
 		return new CorsFilter(source);
 	}
@@ -66,6 +68,11 @@ public class SecurityConfig {
 	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
 		return authenticationConfiguration.getAuthenticationManager();
 	}
+
+	// @Bean
+	// JavaMailSender javaMailSender(){
+	// 	return new JavaMailSenderImpl();
+	// }
 	
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

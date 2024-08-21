@@ -6,5 +6,5 @@ public interface UserCustomRepo {
     void updateEmailByEmail(String id, String newEmail);
     void updateUserGeneralDetails(String id, Map<String, Object> userDetails);
     void updatePasswordById(String id, String password);
-    // boolean existsByEmail(String email);
+    void updateVerificationCodeAndVerificationExpirationTimeByEmail(String email, String verificationCode);
 }

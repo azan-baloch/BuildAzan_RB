@@ -39,11 +39,15 @@ public class UserCustomRepoImpl implements UserCustomRepo{
         mongoTemplate.updateFirst(query, update, User.class);
     }
 
-    // @Override
-    // public boolean existsByEmail(String email) {
-    //     Query query = new Query(Criteria.where("email").is(email));
-    //     return mongoTemplate.exists(query, User.class);
-    // }
+    @Override
+    public void updateVerificationCodeAndVerificationExpirationTimeByEmail(String email, String verificationCode) {
+        Query query = new Query(Criteria.where("email").is(email));
+        Update update = new Update().set("verificationCode", verificationCode);
+        mongoTemplate.updateFirst(query, update, User.class);
+        
+    }
+
+    
 
     
 }

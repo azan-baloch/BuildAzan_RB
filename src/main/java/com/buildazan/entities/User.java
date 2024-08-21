@@ -35,6 +35,7 @@ public class User {
 	private boolean emailVerified;
     private String password;
     private LocalDateTime passwordLastChangedDate;
+    private String verificationCode;
 
     // Store Information
     private List<String> storeIds;

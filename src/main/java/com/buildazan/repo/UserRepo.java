@@ -13,4 +13,5 @@ public interface UserRepo extends MongoRepository<User, String>, UserCustomRepo{
     User findByUsernameOrEmail(String username, String email);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    boolean existsByVerificationCode(String verificationCode);
 }
