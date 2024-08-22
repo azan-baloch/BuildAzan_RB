@@ -5,8 +5,9 @@ import com.buildazan.entities.User;
 import com.buildazan.entities.UserRole;
 import com.buildazan.enums.MemberShipLevel;
 import com.buildazan.enums.SubscriptionStatus;
-import com.buildazan.repo.StoreRepo;
+import com.buildazan.projection.UserExpirationTimeProjection;
 import com.buildazan.repo.UserRepo;
+import com.mongodb.client.result.UpdateResult;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,6 @@ public class UserService{
     private UserRepo userRepo;
 
     @Autowired
-    private StoreRepo storeRepo;
-
-    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
@@ -42,7 +40,7 @@ public class UserService{
         return bCryptPasswordEncoder.encode(password);
     }
 
-    
+    @Transactional
     public User userInitializer(Map<String, String> caredentials) {
         User user = new User();
         user.setId(new ObjectId().toString());
@@ -85,8 +83,6 @@ public class UserService{
         return user;
     }
 
-    
-    @Transactional
     public User saveUser(User user) {
         return userRepo.save(user);
     }
@@ -96,76 +92,66 @@ public class UserService{
         return userRepo.findById(id);
     }
 
-    
-    @Transactional
     public User findUserByUsernameOrEmail(String usernameOrEmail) {
         return userRepo.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
     }
 
-    
-    @Transactional
     public User findUserByEmail(String email) {
         return userRepo.findByEmail(email);
     }
 
-    
-    @Transactional
     public void updateUser(User updatedUser) {
         userRepo.save(updatedUser);
     }
 
-    
-    @Transactional
     public void updateEmailByEmail(String id, String newEmail){
         userRepo.updateEmailByEmail(id, newEmail);
     }
 
-    
     public void updatePaasswordById(String id, String password) {
         userRepo.updatePasswordById(id, password);
     }
 
-    
     public void updateUserGeneralDetails(String id, Map<String, Object> userDetails){
         userRepo.updateUserGeneralDetails(id, userDetails);
     }
 
-    
-    public void updateVerificationCodeByEmail(String email, String verificationCode) {
-        userRepo.updateVerificationCodeAndVerificationExpirationTimeByEmail(email, verificationCode);
+    public void updateCodeAndExpiryByEmail(String email, String verificationCode, LocalDateTime expirationTime) {
+        userRepo.updateCodeAndExpiryByEmail(email, verificationCode, expirationTime);
     }
 
-    
-    public boolean existsByVerificationCode(String verificationCode) {
-        return userRepo.existsByVerificationCode(verificationCode);
+    public UserExpirationTimeProjection findByEmailAndVerificationCode(String email, String verificationCode){
+        return userRepo.findByEmailAndVerificationCode(email, verificationCode);
     }
 
-    
+    public void updateEmailVerifiedByEmail(String email, boolean emailVerified){
+        userRepo.updateEmailVerifiedByEmail(email, emailVerified);
+    }
+
+    public UpdateResult verifyEmailAndGenerateNewCode(String email, String verificationCode){
+        return userRepo.verifyEmailAndGenerateNewCode(email, verificationCode);
+    }
+ 
     public void deleteUserById(String userId) {
         userRepo.deleteById(userId);
     }
 
-    
     public List<User> getAllUsers() {
         return userRepo.findAll();
     }
 
-    
     public long countTotalUsers() {
         return userRepo.count();
     }
 
-    
     public boolean existsByUsername(String username) {
         return userRepo.existsByUsername(username);
     }
 
-    
     public boolean existsByEmail(String email) {
         return userRepo.existsByEmail(email);
     }
 
-    
     public void disableUser(String username) {
         User user = userRepo.findUserByUsername(username);
         if (user != null) {
@@ -173,7 +159,6 @@ public class UserService{
         }
     }
 
-    
     public SubscriptionStatus checkSubscriptionStatus(String username) {
         User user = userRepo.findUserByUsername(username);
         if (user != null) {
@@ -186,7 +171,6 @@ public class UserService{
         throw new IllegalArgumentException("User not found with username: " + username);
     }
 
-    
     public void updateSubscription(String username, SubscriptionStatus subscriptionStatus) {
         User user = userRepo.findUserByUsername(username);
         if (user != null) {
@@ -197,7 +181,6 @@ public class UserService{
         }
     }
 
-    
     public void updateMembership(String username, MemberShipLevel memberShipLevel) {
         User user = userRepo.findUserByUsername(username);
         if (user != null) {

@@ -53,13 +53,13 @@ public class AuthController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         if (!userDetails.isEmailVerified()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "error", "Email not verified",
+                    "error", "Step 1/2. Verify your email",
                     "redirectTo", "/verify-email"));
         } else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE) ||
                 userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
                 userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
             return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
-                    "error", "Payment not cleared",
+                    "error", "Step 2/2. Choose your plan or start free trial",
                     "redirectTo", "/pay"));
         }
         return ResponseEntity.ok(Map.of("isAuthorized", true));

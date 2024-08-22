@@ -7,8 +7,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpSession;
-
 
 @Service
 public class VerificationService{
@@ -19,36 +17,23 @@ public class VerificationService{
 	@Autowired
 	private UserService userService;
 	
-
+	private static final int EXPIRATION_THRESHOLD_MINUTES = 10;
 	
 	public String generateVerificationCode() {
 		return UUID.randomUUID().toString();
 	}
-
 	
-	public boolean sendVerificationCode(String toEmail, String subject) {
+	public boolean sendVerificationCode(String email, String subject, LocalDateTime expirationTime) {
 		String randomCode = generateVerificationCode();
-		userService.updateVerificationCodeByEmail(toEmail, randomCode);
-	    String verificationCode = randomCode + ":" + toEmail + ":" + LocalDateTime.now();
-	    if (emailService.sendVerificationEmail(toEmail, subject, verificationCode)) {
-	        return true;
-	    } else {
-	        return false;
-	    }
+		userService.updateCodeAndExpiryByEmail(email, randomCode, expirationTime);
+	    String verificationCode = randomCode + ":" + email;
+		return emailService.sendVerificationEmail(email, subject, verificationCode);
 	}
-
 	
-	public boolean verifyCode(String code) {
-		return userService.existsByVerificationCode(code);
-	}
-
-	
-	public boolean checkCodeExpiration(LocalDateTime verificationCodeLocalDateTime) {
-		Duration duration = Duration.between(verificationCodeLocalDateTime, LocalDateTime.now());
-		if (duration.toMinutes()>10) {
-			return false;
-		}
-		return true;
+	public boolean checkCodeExpiration(LocalDateTime expirationDateTime) {
+		Duration duration = Duration.between(expirationDateTime, LocalDateTime.now());
+		System.out.println(duration.toMinutes());
+		return duration.toMinutes() < EXPIRATION_THRESHOLD_MINUTES;
 	}
 
 	

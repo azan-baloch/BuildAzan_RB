@@ -21,7 +21,7 @@ public class EmailService{
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(toEmail);
             helper.setSubject(subject);
-            String htmlBody = "<html><body><h2>Verification Link</h2><p>Your verification link is: <a href=\"http://localhost:8080/verification/verify-link?link="
+            String htmlBody = "<html><body><h2>Verification Link</h2><p>Your verification link is: <a href=\"http://localhost:5173/verify-link?link="
                     + verificationCode
                     + "\">Click here to verify</a></p><p>Do not share it with anyone.</p><p>Note: Link will expire in 10 minutes</p></body></html>";
             helper.setText(htmlBody, true);

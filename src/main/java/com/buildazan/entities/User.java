@@ -36,6 +36,7 @@ public class User {
     private String password;
     private LocalDateTime passwordLastChangedDate;
     private String verificationCode;
+    private LocalDateTime expirationTime;
 
     // Store Information
     private List<String> storeIds;
