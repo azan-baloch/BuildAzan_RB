@@ -1,5 +1,7 @@
 package com.buildazan.config;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,7 +59,11 @@ public class SecurityConfig {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		CorsConfiguration config = new CorsConfiguration();
 		config.setAllowCredentials(true);
+		// config.addAllowedOrigin("https://buildazaan.netlify.app/");
 		config.addAllowedOrigin("http://localhost:5173/");
+		config.addAllowedOrigin("http://buildazan.com:5173/");
+		config.addAllowedOrigin("http://azanstore.buildazan.com:5173/");
+		config.addAllowedOrigin("http://awaisstore.buildazan.com:5173/");
 		config.addAllowedHeader("*");
 		config.addAllowedMethod("*");	
 		source.registerCorsConfiguration("/**", config);

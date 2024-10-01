@@ -5,7 +5,9 @@ import com.buildazan.entities.User;
 import com.buildazan.entities.UserRole;
 import com.buildazan.enums.MemberShipLevel;
 import com.buildazan.enums.SubscriptionStatus;
+import com.buildazan.projection.PasswordProjection;
 import com.buildazan.projection.UserExpirationTimeProjection;
+import com.buildazan.projection.UserProjection;
 import com.buildazan.repo.UserRepo;
 import com.mongodb.client.result.UpdateResult;
 
@@ -46,11 +48,11 @@ public class UserService{
         user.setId(new ObjectId().toString());
         user.setUsername(caredentials.get("username"));
         user.setEmail(caredentials.get("email"));
-        user.setFirstName(caredentials.get("firstName"));
-        user.setLastName(caredentials.get("lastName"));
-        user.setPhoneNumber(caredentials.get("phoneNumber"));
-        user.setCountry(caredentials.get("country"));
-        user.setCurrency(caredentials.get("currency"));
+        // user.setFirstName(caredentials.get("firstName"));
+        // user.setLastName(caredentials.get("lastName"));
+        // user.setPhoneNumber(caredentials.get("phoneNumber"));
+        // user.setCountry(caredentials.get("country"));
+        // user.setCurrency(caredentials.get("currency"));
         user.setPassword(generateSecurePassword(caredentials.get("password")));
         user.setTermsAndConditionsAgreed(true);
 
@@ -70,11 +72,7 @@ public class UserService{
         
         Store store = new Store();
         store.setStoreId(new ObjectId().toString());
-        store.setUserId(user.getId());
-        store.setStoreName(caredentials.get("storeName"));
-        store.setSubDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-"));
-        store.setCustomDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-"));
-        store.setCurrency(caredentials.get("currency"));
+        store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-"));
 
         user.setStoreIds(Collections.singletonList(store.getStoreId()));
         mongoTemplate.save(user);
@@ -83,21 +81,13 @@ public class UserService{
         return user;
     }
 
-    public User saveUser(User user) {
-        return userRepo.save(user);
+    public UserProjection findUserById(String id){
+        return userRepo.findUserById(id);
     }
 
-    
-    public Optional<User> findUserById(String id) {
-        return userRepo.findById(id);
-    }
-
-    public User findUserByUsernameOrEmail(String usernameOrEmail) {
-        return userRepo.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
-    }
-
-    public User findUserByEmail(String email) {
-        return userRepo.findByEmail(email);
+    public boolean isPasswordCorrect(String id, String password){
+        PasswordProjection fetchedPasswrod = userRepo.findPasswordById(id);
+        return bCryptPasswordEncoder.matches(password, fetchedPasswrod.getPassword());
     }
 
     public void updateUser(User updatedUser) {
@@ -105,11 +95,7 @@ public class UserService{
     }
 
     public void updateEmailByEmail(String id, String newEmail){
-        userRepo.updateEmailByEmail(id, newEmail);
-    }
-
-    public void updatePaasswordById(String id, String password) {
-        userRepo.updatePasswordById(id, password);
+        userRepo.updateEmailById(id, newEmail);
     }
 
     public void updateUserGeneralDetails(String id, Map<String, Object> userDetails){
@@ -118,6 +104,10 @@ public class UserService{
 
     public void updateCodeAndExpiryByEmail(String email, String verificationCode, LocalDateTime expirationTime) {
         userRepo.updateCodeAndExpiryByEmail(email, verificationCode, expirationTime);
+    }
+
+    public void updateCodeAndExpiryById(String id, String verificationCode, LocalDateTime expirationTime) {
+        userRepo.updateCodeAndExpiryById(id, verificationCode, expirationTime);
     }
 
     public UserExpirationTimeProjection findByEmailAndVerificationCode(String email, String verificationCode){
@@ -131,13 +121,17 @@ public class UserService{
     public UpdateResult verifyEmailAndGenerateNewCode(String email, String verificationCode){
         return userRepo.verifyEmailAndGenerateNewCode(email, verificationCode);
     }
+
+    public UpdateResult verifyOtpAndChangeEmail(String id, String email, String otp){
+        return userRepo.verifyOtpAndChangeEmail(id, email, otp);
+    }
+
+    public void changePassword(String id, String newPassword) {
+        userRepo.changePassword(id, newPassword);
+    }
  
     public void deleteUserById(String userId) {
         userRepo.deleteById(userId);
-    }
-
-    public List<User> getAllUsers() {
-        return userRepo.findAll();
     }
 
     public long countTotalUsers() {
@@ -150,43 +144,6 @@ public class UserService{
 
     public boolean existsByEmail(String email) {
         return userRepo.existsByEmail(email);
-    }
-
-    public void disableUser(String username) {
-        User user = userRepo.findUserByUsername(username);
-        if (user != null) {
-            user.setAccountEnabled(false);
-        }
-    }
-
-    public SubscriptionStatus checkSubscriptionStatus(String username) {
-        User user = userRepo.findUserByUsername(username);
-        if (user != null) {
-            if (user.getSubscriptionStatus() == SubscriptionStatus.UNPAID) {
-                user.setAccountEnabled(false);
-                userRepo.save(user);
-                return user.getSubscriptionStatus();
-            }
-        }
-        throw new IllegalArgumentException("User not found with username: " + username);
-    }
-
-    public void updateSubscription(String username, SubscriptionStatus subscriptionStatus) {
-        User user = userRepo.findUserByUsername(username);
-        if (user != null) {
-            user.setSubscriptionStatus(subscriptionStatus);
-            user.setSubscriptionStartDate(LocalDate.now());
-            user.setSubscriptionEndDate(LocalDate.now().plusDays(user.getMemberShipLevel().getDays()));
-            userRepo.save(user);
-        }
-    }
-
-    public void updateMembership(String username, MemberShipLevel memberShipLevel) {
-        User user = userRepo.findUserByUsername(username);
-        if (user != null) {
-            user.setMemberShipLevel(memberShipLevel);
-            userRepo.save(user);
-        }
     }
 
     

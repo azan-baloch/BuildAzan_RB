@@ -24,8 +24,6 @@ public class Category {
 	private String storeId;
 	@Indexed
 	private String parentCategoryId;
-	@Indexed
-	private String userId;
 	private String name;
 	private String description;
 	private String image;
@@ -34,7 +32,5 @@ public class Category {
 	private String seoTitle;
     private String metaDescription;
     private String slug;
-    private List<String> keywords;
-    private String canonicalURL;	
 
 }

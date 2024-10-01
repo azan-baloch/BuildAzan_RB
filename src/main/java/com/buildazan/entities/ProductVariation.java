@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Variation {
+public class ProductVariation {
 	private String id;
 	private String name;
 	private String value;

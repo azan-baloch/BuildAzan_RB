@@ -39,6 +39,7 @@ public class User {
     private LocalDateTime expirationTime;
 
     // Store Information
+    @Indexed
     private List<String> storeIds;
 
     // Contact and Location

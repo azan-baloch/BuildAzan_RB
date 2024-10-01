@@ -51,17 +51,18 @@ public class AuthController {
                     "redirectTo", "/login"));
         }
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        if (!userDetails.isEmailVerified()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "error", "Step 1/2. Verify your email",
-                    "redirectTo", "/verify-email"));
-        } else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE) ||
-                userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
-                userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
-            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
-                    "error", "Step 2/2. Choose your plan or start free trial",
-                    "redirectTo", "/pay"));
-        }
+        // if (!userDetails.isEmailVerified()) {
+        //     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+        //             "error", "Step 1/2. Verify your email",
+        //             "redirectTo", "/verify-email"));
+        // } 
+        // else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE) ||
+        //         userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
+        //         userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
+        //     return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
+        //             "error", "Step 2/2. Choose your plan or start free trial",
+        //             "redirectTo", "/pay"));
+        // }
         return ResponseEntity.ok(Map.of("isAuthorized", true));
     }
 
@@ -76,7 +77,7 @@ public class AuthController {
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
             String jwt = jwtService.generateJwtToken(userDetailsImpl);
             jwtService.setTokenCookies(response, jwt);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Map.of("userId", userDetailsImpl.getUserId(), "storeId", userDetailsImpl.getStoreId()));
         } catch (AuthenticationException e) {
             System.out.println(e);
             if (e instanceof BadCredentialsException || e instanceof UsernameNotFoundException) {

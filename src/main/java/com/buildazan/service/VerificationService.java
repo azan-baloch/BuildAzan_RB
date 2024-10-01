@@ -22,13 +22,23 @@ public class VerificationService{
 	public String generateVerificationCode() {
 		return UUID.randomUUID().toString();
 	}
+
+	public String generateOTP() {
+        return String.valueOf((int) (Math.random() * 900000) + 100000); // 6-digit OTP
+    }
 	
-	public boolean sendVerificationCode(String email, String subject, LocalDateTime expirationTime) {
+	public boolean sendVerificationLink(String email, String subject, LocalDateTime expirationTime) {
 		String randomCode = generateVerificationCode();
 		userService.updateCodeAndExpiryByEmail(email, randomCode, expirationTime);
 	    String verificationCode = randomCode + ":" + email;
-		return emailService.sendVerificationEmail(email, subject, verificationCode);
+		return emailService.sendVerificationLinkEmail(email, subject, verificationCode);
 	}
+
+	public boolean sendOTP(String id, String email, String subject, LocalDateTime expirationTime) {
+        String otp = generateOTP();
+        userService.updateCodeAndExpiryById(id, otp, expirationTime);
+        return emailService.sendOTPEmail(email, subject, otp);
+    }
 	
 	public boolean checkCodeExpiration(LocalDateTime expirationDateTime) {
 		Duration duration = Duration.between(expirationDateTime, LocalDateTime.now());

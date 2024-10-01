@@ -20,14 +20,8 @@ import lombok.Setter;
 public class Store {
 	@Id
 	private String storeId;
-	@Indexed
-	private String userId;
 	@Indexed(unique = true)
-	private String storeName;
-	@Indexed(unique = true)
-	private String subDomain;
-	@Indexed(unique = true)
-	private String customDomain;
+	private String domain; 
 	private String description;
 	private String logo;
 	private String theme;

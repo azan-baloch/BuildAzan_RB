@@ -36,7 +36,6 @@ public class CategorController {
     @CacheEvict(value = "categories", allEntries = true)
     public ResponseEntity<Category> addCategory(@ModelAttribute("category") Category category, @RequestParam(name = "categoryImage", required = false) MultipartFile categoryImage, Authentication authentication){
         UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
-        category.setUserId(user.getUserId());
         category.setCreatedDate(LocalDateTime.now());
         category.setImage(imageService.saveImage("uploads/img/categories/", categoryImage));
         return ResponseEntity.ok(categoryService.saveCategory(category));

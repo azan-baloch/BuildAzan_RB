@@ -35,13 +35,18 @@ public class VerificationController {
     @PostMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
-        boolean userExists = userService.existsByEmail(email);
-        if (!userExists) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email not found"));
+        try {
+            boolean userExists = userService.existsByEmail(email);
+            if (!userExists) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email not found"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
         try {
             String subject = "Verification link";
-            if (!VerificationService.sendVerificationCode(email, subject, LocalDateTime.now())) {
+            if (!VerificationService.sendVerificationLink(email, subject, LocalDateTime.now())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email not sent"));
             }
         } catch (Exception e) {
@@ -49,38 +54,22 @@ public class VerificationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Link not sent, try again"));
         }
-        return ResponseEntity.ok(true);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/verify-link")
     public ResponseEntity<?> verifyLink(@RequestParam("email") String email, @RequestParam("code") String code) {
-
-        // UserExpirationTimeProjection userProjection = userService.findByEmailAndVerificationCode(email, verificationCode);
-
-        // if (userProjection == null) {
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        //             .body(Map.of("error", "Link tampered or not correct, Wrong credentials"));
-        // }
-
-        // if (!VerificationService.checkCodeExpiration(userProjection.getExpirationTime())) {
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        //             .body(Map.of("error", "Link expired, Request new one"));
-        // }
-
-        // userService.updateEmailVerifiedByEmail(email, true);
-
-
-        // UpdateResult updateResult = userService.verifyEmailAndGenerateNewCode(email, code);
-        // System.out.println("Modified Count: " + updateResult.getModifiedCount());
-        // System.out.println("Matched Count: " + updateResult.getMatchedCount());
-        // if (updateResult.getModifiedCount()<=0) {
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        //             .body(Map.of("error", "Link tampered or not correct, Wrong credentials"));
-        // }
-
-        System.out.println("Verificaiton successfull");
-
-        return ResponseEntity.ok().build();
+        try {
+            UpdateResult updateResult = userService.verifyEmailAndGenerateNewCode(email, code);
+            if (updateResult.getModifiedCount() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Link tampered or not correct, Wrong credentials"));
+            }
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
     }
 
 }

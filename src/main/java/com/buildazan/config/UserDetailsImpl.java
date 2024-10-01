@@ -82,16 +82,4 @@ public class UserDetailsImpl implements UserDetails{
 		return user.getStoreIds();
 	}
 
-	public void setEmailVerified(boolean isEmailVerified) {
-        this.user.setEmailVerified(isEmailVerified);
-    }
-
-    public void setMemberShipLevel(MemberShipLevel memberShipLevel) {
-        this.user.setMemberShipLevel(memberShipLevel);
-    }
-
-    public void setSubscriptionStatus(SubscriptionStatus subscriptionStatus) {
-        this.user.setSubscriptionStatus(subscriptionStatus);
-    }
-
 }

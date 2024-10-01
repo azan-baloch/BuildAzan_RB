@@ -1,6 +1,7 @@
 package com.buildazan.entities;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +23,6 @@ public class Product {
 	@Id
     private String id;
 	@Indexed
-    private String userId;
-	@Indexed
     private String storeId;
     private String name;
     private String description;
@@ -39,22 +38,22 @@ public class Product {
 	private boolean trackInventory;
 	private int stockQuantity;
 	private boolean stockStatus;
-	private String sku;
+	private String sku; 
     private double weight;
-    private ProductDimensions productDimensions;
+    private double length;
+    private double width;
+    private double height;
     private String manufacturer;
     private String brand;
     private Map<String, String> attributes;
     private String status;
-    private String visibility;
     private boolean requiresShipping;
-    private List<Variation> variations;
+    private List<ProductVariation> variations;
     //SEO
     private String seoTitle;
     private String metaDescription;
+    @Indexed(unique = true)
     private String slug;
-    private List<String> keywords;
-    private String canonicalURL;
     private Map<String, Object> schemaMarkup;
     //Shipping
     private ProductShipping productShipping;

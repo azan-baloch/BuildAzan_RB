@@ -21,7 +21,7 @@ public class UserCustomRepoImpl implements UserCustomRepo {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public void updateEmailByEmail(String id, String newEmail) {
+    public void updateEmailById(String id, String newEmail) {
         mongoTemplate.updateFirst(
                 Query.query(Criteria.where("_id").is(id)),
                 new Update().set("email", newEmail),
@@ -40,17 +40,19 @@ public class UserCustomRepoImpl implements UserCustomRepo {
     }
 
     @Override
-    public void updatePasswordById(String id, String password) {
+    public void updateCodeAndExpiryByEmail(String email, String verificationCode, LocalDateTime expirationTime) {
         mongoTemplate.updateFirst(
-                Query.query(Criteria.where("_id").is(id)),
-                new Update().set("password", password),
+                Query.query(Criteria.where("email").is(email)),
+                new Update()
+                        .set("verificationCode", verificationCode)
+                        .set("expirationTime", expirationTime),
                 User.class);
     }
 
     @Override
-    public void updateCodeAndExpiryByEmail(String email, String verificationCode, LocalDateTime expirationTime) {
+    public void updateCodeAndExpiryById(String id, String verificationCode, LocalDateTime expirationTime) {
         mongoTemplate.updateFirst(
-                Query.query(Criteria.where("email").is(email)),
+                Query.query(Criteria.where("id").is(id)),
                 new Update()
                         .set("verificationCode", verificationCode)
                         .set("expirationTime", expirationTime),
@@ -69,11 +71,31 @@ public class UserCustomRepoImpl implements UserCustomRepo {
     public UpdateResult verifyEmailAndGenerateNewCode(String email, String verificationCode) {
         return mongoTemplate.updateFirst(
                 new Query(Criteria.where("email").is(email)
-                .and("verificationCode").is(verificationCode)
-                .and("expirationTime").gt(new Date(System.currentTimeMillis() - 15 * 60 * 1000))),
+                        .and("verificationCode").is(verificationCode)
+                        .and("expirationTime").gt(new Date(System.currentTimeMillis() - 15 * 60 * 1000))),
                 new Update()
                         .set("emailVerified", true)
                         .set("verificationCode", UUID.randomUUID()),
+                User.class);
+    }
+
+    @Override
+    public UpdateResult verifyOtpAndChangeEmail(String id, String email, String otp) {
+        return mongoTemplate.updateFirst(
+                new Query(Criteria.where("_id").is(id)
+                        .and("verificationCode").is(otp)
+                        .and("expirationTime").gt(new Date(System.currentTimeMillis() - 15 * 60 * 1000))),
+                new Update()
+                        .set("email", email)
+                        .set("verificationCode", UUID.randomUUID()),
+                User.class);
+    }
+
+    @Override
+    public void changePassword(String id, String newPassword) {
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(id)),
+                new Update().set("password", newPassword),
                 User.class);
     }
 
