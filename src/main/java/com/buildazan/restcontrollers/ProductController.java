@@ -40,6 +40,7 @@ import com.buildazan.entities.Product;
 import com.buildazan.entities.ProductDimensions;
 import com.buildazan.entities.ProductShipping;
 import com.buildazan.projection.ProductProjection;
+import com.buildazan.projection.SlugProjection;
 import com.buildazan.repo.StoreRepo;
 import com.buildazan.service.ImageService;
 import com.buildazan.service.ProductService;
@@ -140,69 +141,7 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/edit-product")
-    public ResponseEntity<Boolean> editProduct(
-            @ModelAttribute(name = "product") Product formProduct,
-            @ModelAttribute(name = "productDimensions") ProductDimensions productDimensions,
-            Authentication authentication,
-            @RequestParam("productImage") MultipartFile productImage,
-            @RequestParam("galleryImages") List<MultipartFile> galleryImages,
-            @RequestParam(value = "existingGalleryImages", required = false) List<String> existingGalleryImages,
-            @ModelAttribute("productShipping") ProductShipping productShipping) {
-
-        UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
-
-        Optional<Product> optionalProduct = productService.getProductById(formProduct.getId());
-        if (optionalProduct.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        }
-
-        Product product = optionalProduct.get();
-
-        // Update the fields with new values
-        product.setName(formProduct.getName());
-        product.setDescription(formProduct.getDescription());
-        product.setPrice(formProduct.getPrice());
-        product.setDiscountPrice(formProduct.getDiscountPrice());
-
-        String uploadPath = "uploads/img/products/";
-        if (!productImage.isEmpty()) {
-            product.setProductImage(imageService.saveImage(uploadPath, productImage));
-        }
-
-        List<String> galleryImageNames = new ArrayList<>();
-        if (existingGalleryImages != null && !existingGalleryImages.isEmpty()) {
-            galleryImageNames.addAll(existingGalleryImages);
-        }
-
-        if (galleryImages != null && !galleryImages.isEmpty()) {
-            for (MultipartFile multipartFile : galleryImages) {
-                String fileName = imageService.saveImage(uploadPath, multipartFile);
-                if (fileName != null) {
-                    galleryImageNames.add(fileName);
-                }
-            }
-        }
-        product.setGalleryImages(galleryImageNames);
-
-        product.setUpdatedDate(LocalDateTime.now());
-        product.setCategoryId(formProduct.getCategoryId());
-        product.setTags(formProduct.getTags());
-        product.setTrackInventory(formProduct.isTrackInventory());
-        product.setStockQuantity(formProduct.getStockQuantity());
-        product.setStockStatus(formProduct.isStockStatus());
-        product.setSku(formProduct.getSku());
-        product.setWeight(formProduct.getWeight());
-        product.setManufacturer(formProduct.getManufacturer());
-        product.setBrand(formProduct.getBrand());
-        product.setAttributes(formProduct.getAttributes());
-        product.setStatus(formProduct.getStatus());
-        product.setProductShipping(productShipping);
-
-        productService.saveProduct(product);
-        return ResponseEntity.ok(true);
-    }
-
+    
     @DeleteMapping("/delete/{id}")
     // @CacheEvict(value = "products", allEntries = true)
     public ResponseEntity<?> deleteProduct(@PathVariable String id) {

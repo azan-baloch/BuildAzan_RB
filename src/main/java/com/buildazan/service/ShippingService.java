@@ -1,5 +1,6 @@
 package com.buildazan.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,156 +21,174 @@ import com.buildazan.entities.FlatRateShipping;
 import com.buildazan.entities.FreeShipping;
 import com.buildazan.entities.PriceRange;
 import com.buildazan.entities.ShippingOption;
-import com.buildazan.enums.ShippingType;
 import com.buildazan.repo.ShippingOptionRepo;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ShippingService {
     @Autowired
-    private ShippingOptionRepo shippingRepo; 
+    private ShippingOptionRepo shippingRepo;
 
     @Autowired
     private MongoTemplate mongoTemplate;
-    
-    public List<ShippingOption> getShippings(){
-        return shippingRepo.findAll();
+
+    public List<ShippingOption> findShippingByStoreId(String storeId) {
+        return shippingRepo.findAllByStoreId(storeId);
     }
 
-    public Optional<ShippingOption> findShippingById(String id){
+    public Optional<ShippingOption> findShippingById(String id) {
         return shippingRepo.findById(id);
     }
 
-    @Transactional
-    public void updateShippingOption(String id, boolean enabled) {
+    public void updateShippingStatus(Map<String, String> payload) {
+        String shippingOptionId = payload.get("shippingOptionId");
+        String storeId = payload.get("storeId");
+        Boolean enabled = Boolean.parseBoolean(payload.get("enabled"));
+
         if (enabled) {
-            // Disable all other options
-            Query query = new Query();
-            query.addCriteria(Criteria.where("_id").ne(id));
-            Update update = new Update();
-            update.set("enabled", false);
-            mongoTemplate.updateMulti(query, update, ShippingOption.class);
+            Query disableAllQuery = new Query(Criteria.where("storeId").is(storeId));
+            Update disableAllUpdate = new Update().set("enabled", false);
+            mongoTemplate.updateMulti(disableAllQuery, disableAllUpdate, ShippingOption.class);
 
-            // Enable the selected option
-            updateEnabledStatus(id, true);
+            // Step 2: Enable the selected shipping option
+            Query enableQuery = new Query(Criteria.where("_id").is(shippingOptionId));
+            Update enableUpdate = new Update().set("enabled", true);
+            mongoTemplate.updateFirst(enableQuery, enableUpdate, ShippingOption.class);
         } else {
-            // Disable the selected option
-            updateEnabledStatus(id, false);
+            Query disableQuery = new Query(Criteria.where("_id").is(shippingOptionId));
+            Update disableUpdate = new Update().set("enabled", false);
+            mongoTemplate.updateFirst(disableQuery, disableUpdate, ShippingOption.class);
         }
     }
 
-    @Transactional
-    public ShippingOption updateShippingOptionDetails(ShippingOption existingOption, Map<String, Object> shippingDetails) {
-        existingOption.setName((String) shippingDetails.get("name"));
-        existingOption.setDescription((String) shippingDetails.get("description"));
-        existingOption.setMinEstimatedDays(Integer.parseInt((String) shippingDetails.get("minEstimatedDays")));
-        existingOption.setMaxEstimatedDays(Integer.parseInt((String) shippingDetails.get("maxEstimatedDays")));
-        existingOption.setShippingRegion((String) shippingDetails.get("region"));
-        existingOption.setShippingMethod((String) shippingDetails.get("shippingMethod"));
-
-        if (existingOption instanceof FreeShipping) {
-            // No additional fields to update
-        } else if (existingOption instanceof FlatRateShipping) {
-            ((FlatRateShipping) existingOption).setFlatRate(Double.parseDouble((String) shippingDetails.get("flatRate")));
-        } else if (existingOption instanceof ConditionalFreeShipping) {
-            List<Map<String, Object>> priceRangeMaps = (List<Map<String, Object>>) shippingDetails.get("priceRanges");
-            List<PriceRange> priceRanges = priceRangeMaps.stream()
-                    .map(this::convertToPriceRange)
-                    .collect(Collectors.toList());
-            ((ConditionalFreeShipping) existingOption).setPriceRanges(priceRanges);
-        } else if (existingOption instanceof CustomRateShipping) {
-            List<Map<String, Object>> customRulesMaps = (List<Map<String, Object>>) shippingDetails.get("customRules");
-            List<CustomRateRule> customRateRules = customRulesMaps.stream()
-                    .map(this::convertToCustomRateRule)
-                    .collect(Collectors.toList());
-            ((CustomRateShipping) existingOption).setCustomRateRules(customRateRules);
-        }
-
-        return shippingRepo.save(existingOption);
-    }
-
-
-    private void updateEnabledStatus(String id, boolean enabled) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(id));
-        Update update = new Update();
-        update.set("enabled", enabled);
-        mongoTemplate.updateFirst(query, update, ShippingOption.class);
-    }
-
-    @Transactional
     public void deleteShippingOption(String id) {
         shippingRepo.deleteById(id);
     }
 
+    @Transactional
+    public void updateShippingOption(Map<String, String> shippingDetails) {
+        String id = shippingDetails.get("id");
+        String shippingType = shippingDetails.get("shippingType");
 
-    public ShippingOption createShippingOption(Map<String, Object> shippingDetails){
-        // String shippingType = (String) shippingDetails.get("shippingType");
-        String shippingType = "LOCAL";
-        String shippingMethod = (String) shippingDetails.get("shippingMethod");
+        Update update = new Update()
+                .set("name", shippingDetails.get("name"))
+                .set("description", shippingDetails.get("description"))
+                .set("minEstimatedDays", Integer.parseInt(shippingDetails.get("minEstimatedDays")))
+                .set("maxEstimatedDays", Integer.parseInt(shippingDetails.get("maxEstimatedDays")))
+                .set("shippingRegion", shippingDetails.get("shippingRegion"));
+
+        switch (shippingType) {
+            case "conditional-free-shipping":
+                List<PriceRange> priceRanges = getPriceRangesFromDetails(shippingDetails);
+                update.set("priceRanges", priceRanges);
+                break;
+
+            case "flat-rate-shipping":
+                update.set("flatRate", Double.parseDouble(shippingDetails.get("flatRate")));
+                break;
+
+            case "custom-shipping":
+                List<CustomRateRule> customRateRules = getCustomRateRulesFromDetails(shippingDetails);
+                update.set("customRateRules", customRateRules);
+                break;
+
+            case "free-shipping":
+            default:
+                break;
+        }
+
+        Query query = new Query(Criteria.where("_id").is(id).and("storeId").is(shippingDetails.get("storeId")));
+        mongoTemplate.updateFirst(query, update, ShippingOption.class);
+    }
+
+    @Transactional
+    public ShippingOption createShippingOption(Map<String, String> shippingDetails) {
+        String shippingType = shippingDetails.get("shippingType");
         ShippingOption shippingOption = null;
-        switch (shippingMethod) {
-            case "FreeShipping":
+
+        switch (shippingType) {
+            case "free-shipping":
                 shippingOption = new FreeShipping();
                 break;
-            case "ConditionalFreeShipping":
+
+            case "conditional-free-shipping":
                 shippingOption = new ConditionalFreeShipping();
-                List<Map<String, Object>> priceRangeMaps = (List<Map<String, Object>>) shippingDetails.get("priceRanges");
-                List<PriceRange> priceRanges = priceRangeMaps.stream() 
-                .map(this::convertToPriceRange)
-                .collect(Collectors.toList());
+                List<PriceRange> priceRanges = getPriceRangesFromDetails(shippingDetails);
                 ((ConditionalFreeShipping) shippingOption).setPriceRanges(priceRanges);
                 break;
-            case "FlatRateShipping":
+
+            case "flat-rate-shipping":
                 shippingOption = new FlatRateShipping();
-                ((FlatRateShipping) shippingOption).setFlatRate(Double.parseDouble((String) shippingDetails.get("flatRate")));
+                ((FlatRateShipping) shippingOption).setFlatRate(Double.parseDouble(shippingDetails.get("flatRate")));
                 break;
-            case "CustomRateShipping":
-                shippingOption = new CustomRateShipping();  
-                List<Map<String, Object>> customeRulesMaps = (List<Map<String, Object>>) shippingDetails.get("customRules");
-                List<CustomRateRule> customRateRules = customeRulesMaps.stream()
-                .map(this::convertToCustomRateRule)
-                .collect(Collectors.toList());
+
+            case "custom-shipping":
+                shippingOption = new CustomRateShipping();
+                List<CustomRateRule> customRateRules = getCustomRateRulesFromDetails(shippingDetails);
                 ((CustomRateShipping) shippingOption).setCustomRateRules(customRateRules);
-            break;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid shipping type");
         }
-        if (shippingOption!=null) {
-            shippingOption.setName((String) shippingDetails.get("name"));
-            shippingOption.setDescription((String) shippingDetails.get("description"));
-            shippingOption.setMinEstimatedDays(Integer.parseInt((String) shippingDetails.get("minEstimatedDays")));
-            shippingOption.setMaxEstimatedDays(Integer.parseInt((String) shippingDetails.get("maxEstimatedDays")));
-            shippingOption.setShippingRegion((String) shippingDetails.get("shippingRegion"));
-            shippingOption.setShippingType(ShippingType.valueOf(shippingType));
-            shippingOption.setEnabled(false);
-            shippingOption.setShippingMethod(shippingMethod);
+
+        if (shippingOption != null) {
+            shippingOption.setStoreId(shippingDetails.get("storeId"));
+            shippingOption.setName(shippingDetails.get("name"));
+            shippingOption.setDescription(shippingDetails.get("description"));
+            shippingOption.setMinEstimatedDays(Integer.parseInt(shippingDetails.get("minEstimatedDays")));
+            shippingOption.setMaxEstimatedDays(Integer.parseInt(shippingDetails.get("maxEstimatedDays")));
+            shippingOption.setShippingRegion(shippingDetails.get("shippingRegion"));
+            shippingOption.setEnabled(true);
+            shippingOption.setShippingType(shippingType);
+            Query query = new Query(
+                    Criteria.where("storeId").is(shippingDetails.get("storeId")).and("enabled").is(true));
+            Update update = new Update().set("enabled", false);
+            mongoTemplate.updateMulti(query, update, ShippingOption.class);
         }
+
         return shippingRepo.save(shippingOption);
     }
 
-    private PriceRange convertToPriceRange(Map<String, Object> shippingDetails) {
-        PriceRange priceRange = new PriceRange();
-        priceRange.setMinPrice(Double.parseDouble((String) shippingDetails.get("minPrice")));
-        priceRange.setMaxPrice(Double.parseDouble((String) shippingDetails.get("maxPrice")));
-        priceRange.setShippingFee(Double.parseDouble((String) shippingDetails.get("shippingFee")));
-        return priceRange;
+    private List<PriceRange> getPriceRangesFromDetails(Map<String, String> shippingDetails) {
+        List<PriceRange> priceRanges = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String priceRangesJson = (String) shippingDetails.get("priceRanges");
+
+            if (priceRangesJson != null && !priceRangesJson.isEmpty()) {
+                priceRanges = objectMapper.readValue(priceRangesJson, new TypeReference<List<PriceRange>>() {
+                });
+            } else {
+                System.out.println("No price ranges provided.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return priceRanges;
     }
 
-    private CustomRateRule convertToCustomRateRule(Map<String, Object> shippingDetails){
-        CustomRateRule customRateRule = new CustomRateRule();
-        customRateRule.setMinPrice(Double.parseDouble((String) shippingDetails.get("minPrice")));
-        customRateRule.setMaxPrice(Double.parseDouble((String) shippingDetails.get("maxPrice")));
-        if (shippingDetails.containsKey("minWeight") && shippingDetails.get("minWeight") != null) {
-            customRateRule.setMinWeight(Double.parseDouble((String) shippingDetails.get("minWeight")));
-        } else {
-            customRateRule.setMinWeight(0);
+    private List<CustomRateRule> getCustomRateRulesFromDetails(Map<String, String> shippingDetails) {
+        List<CustomRateRule> customRateRules = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String customRatesJson = (String) shippingDetails.get("customRates");
+
+            if (customRatesJson != null && !customRatesJson.isEmpty()) {
+                customRateRules = objectMapper.readValue(customRatesJson, new TypeReference<List<CustomRateRule>>() {
+                });
+            } else {
+                System.out.println("No custom rates provided.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    
-        if (shippingDetails.containsKey("maxWeight") && shippingDetails.get("maxWeight") != null) {
-            customRateRule.setMaxWeight(Double.parseDouble((String) shippingDetails.get("maxWeight")));
-        } else {
-            customRateRule.setMaxWeight(0); // or some default value
-        }
-        customRateRule.setShippingFee(Double.parseDouble((String) shippingDetails.get("shippingFee")));
-        return customRateRule;
+
+        return customRateRules;
     }
 
 }

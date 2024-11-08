@@ -3,6 +3,7 @@ package com.buildazan.entities;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,7 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Document(collection = "shipping-option")
+@Document(collection = "shipping")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,16 +22,14 @@ import lombok.Setter;
 public class ShippingOption {
     @Id
     private String id;
+    @Indexed
+    private String storeId;
     private String name;
     private String description;
     private int minEstimatedDays;
     private int maxEstimatedDays;
     private String shippingRegion;
-    private ShippingType shippingType;
-    private String shippingMethod;
+    private String shippingType;
     private boolean enabled;
-
-    @DBRef
-    private List<Carrier> carriers;
 
 }

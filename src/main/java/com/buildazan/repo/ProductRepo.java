@@ -11,22 +11,24 @@ import org.springframework.stereotype.Repository;
 
 import com.buildazan.entities.Product;
 import com.buildazan.projection.ProductProjection;
+import com.buildazan.projection.SlugProjection;
 
 @Repository
 public interface ProductRepo extends MongoRepository<Product, String>, ProductCustomRepo {
     @Query(value = "{ 'storeId': ?0 }", 
-           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1 }")
-    Page<ProductProjection> findAllByStoreId(String storeId, Pageable pageable);
+           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
+    Page<ProductProjection> findAllProjectionByStoreId(String storeId, Pageable pageable);
 
     @Query(value = "{ 'storeId': ?0 }", 
-           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1 }")
-    List<ProductProjection> findByStoreId(String storeId);
+           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
+    List<ProductProjection> findAllProjectionByStoreId(String storeId);
 
-    @Query(value = "{ 'storeName': ?0 }", 
-           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1 }")
-    List<ProductProjection> findByStoreName(String storeName);
+    List<Product> findAllProductsByStoreId(String storeId);
 
     Product findByStoreIdAndSlug(String storeId, String slug);
+
+    @Query(value = "{ 'storeId': ?0}")
+    List<SlugProjection> findSlugsByStoreId(String storeId);
 }   
 
 

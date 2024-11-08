@@ -1,6 +1,5 @@
 package com.buildazan.restcontrollers;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.buildazan.entities.ShippingOption;
@@ -26,61 +26,66 @@ public class ShippingController {
     private ShippingService shippingService;
 
     @PostMapping("/add-shipping")
-    public ResponseEntity<?> addShippingOption(@RequestBody Map<String, Object> shippingDetails ) {
+    public ResponseEntity<?> addShippingOption(@RequestBody Map<String, String> shippingDetails) {
         try {
-            ShippingOption shippingOption = shippingService.createShippingOption(shippingDetails);
-            return new ResponseEntity<>(shippingOption, HttpStatus.CREATED);
+            shippingService.createShippingOption(shippingDetails);
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Error creating shipping option: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
     }
 
-    @GetMapping("/shippings")
-    public ResponseEntity<List<ShippingOption>> getAllShippings(){
-        return ResponseEntity.ok(shippingService.getShippings());
+    @PutMapping("/update-shipping")
+    public ResponseEntity<?> updateShipping(@RequestBody Map<String, String> shippingDetails){
+        try {
+            shippingService.updateShippingOption(shippingDetails);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
     }
 
-    @PostMapping("/enable")
-    public ResponseEntity<?> updateShippingOption(@RequestBody Map<String, Object> payload) {
-        String id = (String) payload.get("id");
-        boolean enabled = (Boolean) payload.get("enabled");
+    @GetMapping("/get-shippings")
+    public ResponseEntity<?> getAllShippings(@RequestParam String storeId) {
         try {
-            shippingService.updateShippingOption(id, enabled);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return ResponseEntity.ok(shippingService.findShippingByStoreId(storeId));
         } catch (Exception e) {
-            return new ResponseEntity<>("Error updating shipping option: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
+    @PutMapping("/update-shipping-status")
+    public ResponseEntity<?> updateShippingStatus(@RequestBody Map<String, String> payload) {
+        try {
+            shippingService.updateShippingStatus(payload);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<ShippingOption>> getShippingById(@PathVariable String id){
+    public ResponseEntity<Optional<ShippingOption>> getShippingById(@PathVariable String id) {
         Optional<ShippingOption> shippingOption = shippingService.findShippingById(id);
         return ResponseEntity.ok(shippingOption);
-    }
-
-    @PutMapping("/update-shipping/{id}")
-    public ResponseEntity<?> updateShippingOption(@PathVariable String id, @RequestBody Map<String, Object> shippingDetails) {
-        try {
-            Optional<ShippingOption> existingOptionOpt = shippingService.findShippingById(id);
-                ShippingOption existingOption = existingOptionOpt.get();
-                shippingService.updateShippingOptionDetails(existingOption, shippingDetails);
-                return new ResponseEntity<>(existingOption, HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Error updating shipping option: " + e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
     }
 
     @DeleteMapping("/delete-shipping/{id}")
     public ResponseEntity<?> deleteShippingOption(@PathVariable String id) {
         try {
             shippingService.deleteShippingOption(id);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return new ResponseEntity<>("Error deleting shipping option: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
     }
-
 
 }

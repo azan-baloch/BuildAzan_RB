@@ -2,7 +2,7 @@ package com.buildazan.entities;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "shipping-option")
+@Document(collection = "shipping")
 public class FlatRateShipping extends ShippingOption{
     private double flatRate;
 

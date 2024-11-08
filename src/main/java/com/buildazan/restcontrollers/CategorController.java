@@ -2,10 +2,12 @@ package com.buildazan.restcontrollers;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,36 +23,45 @@ import org.springframework.web.multipart.MultipartFile;
 import com.buildazan.config.UserDetailsImpl;
 import com.buildazan.entities.Category;
 import com.buildazan.service.CategoryService;
-import com.buildazan.service.ImageService;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/category")
 public class CategorController {
     @Autowired
     private CategoryService categoryService;
 
-    @Autowired
-    private ImageService imageService;
-    
-    @PostMapping("/add-category")   
-    @CacheEvict(value = "categories", allEntries = true)
-    public ResponseEntity<Category> addCategory(@ModelAttribute("category") Category category, @RequestParam(name = "categoryImage", required = false) MultipartFile categoryImage, Authentication authentication){
-        UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
-        category.setCreatedDate(LocalDateTime.now());
-        category.setImage(imageService.saveImage("uploads/img/categories/", categoryImage));
-        return ResponseEntity.ok(categoryService.saveCategory(category));
+    @PostMapping("/add-category")
+    public ResponseEntity<?> saveCategory(@RequestBody Category category) {
+        try {
+            category.setCreatedDate(LocalDateTime.now());
+            categoryService.saveCategory(category);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
     }
-    
-    @Cacheable("categories")
-    @GetMapping("/get-categories")
-    public ResponseEntity<List<Category>> getCategories(){
-        return ResponseEntity.ok(categoryService.getCategories());
+
+    @GetMapping("/fetch-categories")
+    public ResponseEntity<?> fetchCategories(@RequestParam("storeId") String storeId) {
+        try {
+            return ResponseEntity.ok(categoryService.fetchCategories());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
     }
 
     @DeleteMapping("/delete/{id}")
-    @CacheEvict(value = "categories", allEntries = true)
-    public void deleteCategory(@PathVariable("id") String id){
-        categoryService.deleteCategoryById(id);
+    public ResponseEntity<?> deleteCategory(@PathVariable String id){
+        try {
+            categoryService.deleteCategoryById(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
     }
 
 }

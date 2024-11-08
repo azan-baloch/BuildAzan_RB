@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity 
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
@@ -49,9 +51,14 @@ public class SecurityConfig {
 		return daoAuthenticationProvider;
 	}
 	
+	// @Bean
+	// PersistentTokenRepository getPersistentTokenRepository() {
+	// 	return new MongoPersistantTokenRepository();
+	// }
+
 	@Bean
-	PersistentTokenRepository getPersistentTokenRepository() {
-		return new MongoPersistantTokenRepository();
+	MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory databaseFactory){
+		return new MongoTransactionManager(databaseFactory);
 	}
 
 	@Bean

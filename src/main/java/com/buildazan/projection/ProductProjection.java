@@ -1,7 +1,7 @@
 package com.buildazan.projection;
 
 import java.time.LocalDateTime;
-
+import java.util.List;
 public interface ProductProjection {
     String getId();
     String getStoreId();
@@ -14,4 +14,5 @@ public interface ProductProjection {
     Boolean getStockStatus();
     String getProductImage();
     String getStatus();
+    List<String> getCategoryId();
 }

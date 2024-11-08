@@ -26,5 +26,9 @@ public class StoreService {
     public AggregationResults<Map<String, Object>> findStoreWithProductsByDomain(String domain){
         return storeRepo.findStoreWithProductsByDomain(domain);
     }
+
+    public AggregationResults<Map<String, Object>> findAllSlugsForStore(String domain){
+        return storeRepo.findAllSlugsForStore(domain);
+    }
     
 }

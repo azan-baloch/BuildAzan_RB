@@ -52,16 +52,17 @@ public class AuthController {
         }
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         // if (!userDetails.isEmailVerified()) {
-        //     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-        //             "error", "Step 1/2. Verify your email",
-        //             "redirectTo", "/verify-email"));
-        // } 
-        // else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE) ||
-        //         userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
-        //         userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
-        //     return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
-        //             "error", "Step 2/2. Choose your plan or start free trial",
-        //             "redirectTo", "/pay"));
+        // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+        // "error", "Step 1/2. Verify your email",
+        // "redirectTo", "/verify-email"));
+        // }
+        // else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE)
+        // ||
+        // userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
+        // userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
+        // return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
+        // "error", "Step 2/2. Choose your plan or start free trial",
+        // "redirectTo", "/pay"));
         // }
         return ResponseEntity.ok(Map.of("isAuthorized", true));
     }
@@ -77,7 +78,8 @@ public class AuthController {
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
             String jwt = jwtService.generateJwtToken(userDetailsImpl);
             jwtService.setTokenCookies(response, jwt);
-            return ResponseEntity.ok(Map.of("userId", userDetailsImpl.getUserId(), "storeId", userDetailsImpl.getStoreId()));
+            return ResponseEntity
+                    .ok(Map.of("userId", userDetailsImpl.getUserId(), "storeId", userDetailsImpl.getStoreId()));
         } catch (AuthenticationException e) {
             System.out.println(e);
             if (e instanceof BadCredentialsException || e instanceof UsernameNotFoundException) {
@@ -101,12 +103,8 @@ public class AuthController {
                 errorMessage = "The username is already taken, please choose a different username.";
             } else if (e.getMessage().contains("email")) {
                 errorMessage = "An account with this email already exists. Please use a different email.";
-            } else if (e.getMessage().contains("storeName")) {
-                errorMessage = "A store with this name already exists. Please choose a different store name.";
-            } else if (e.getMessage().contains("subDomain")) {
-                errorMessage = "The subdomain is already in use. Please choose a different subdomain.";
-            } else if (e.getMessage().contains("customDomain")) {
-                errorMessage = "The custom domain is already in use. Please choose a different custom domain.";
+            } else if (e.getMessage().contains("domain")) {
+                errorMessage = "The domain or storename is already in use. Please choose a different name.";
             } else {
                 errorMessage = "A unique constraint violation occurred.";
             }

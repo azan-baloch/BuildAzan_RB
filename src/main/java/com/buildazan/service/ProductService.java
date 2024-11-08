@@ -15,6 +15,7 @@ import com.buildazan.entities.Product;
 import com.buildazan.entities.ProductShipping;
 import com.buildazan.entities.ShippingOption;
 import com.buildazan.projection.ProductProjection;
+import com.buildazan.projection.SlugProjection;
 import com.buildazan.repo.ProductRepo;
 
 @Service
@@ -107,25 +108,21 @@ public class ProductService {
         return productRepo.findByStoreIdAndSlug(storeId, slug);
     }
 
-    public Page<Product> getAllProducts(Pageable pageable) {
-        return productRepo.findAll(pageable);
-    }
-
-    public Optional<Product> getProductById(String id) {
-        return productRepo.findById(id);
-    }
-
     public List<ProductProjection> getProductsByStoreId(String storeId) {
-        return productRepo.findByStoreId(storeId);
+        return productRepo.findAllProjectionByStoreId(storeId);
     }
 
     public Page<ProductProjection> getPagedProductsByStoreId(String storeId, Pageable pageable) {
-        return productRepo.findAllByStoreId(storeId, pageable);
+        return productRepo.findAllProjectionByStoreId(storeId, pageable);
     }
 
     public Page<Product> getFilteredProducts(String storeId, String categoryId, String status, Boolean stockStatus,
             String search, Pageable pageable) {
         return productRepo.getFilteredProducts(storeId, categoryId, status, stockStatus, search, pageable);
+    }
+
+    public List<SlugProjection> findSlugByStoreId(String storeId){
+        return productRepo.findSlugsByStoreId(storeId);
     }
 
     public void deleteProductById(String id) {
