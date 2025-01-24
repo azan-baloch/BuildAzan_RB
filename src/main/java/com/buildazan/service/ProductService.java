@@ -2,6 +2,7 @@ package com.buildazan.service;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,9 @@ public class ProductService {
 
     public Product productInitializer(Map<String, String> data) {
         Product product = new Product();
+        if (data.get("id") != null && !data.get("id").isEmpty()) {
+            product.setId(data.get("id"));
+        }
         product.setStoreId(data.get("storeId"));
         product.setSlug(data.get("slug"));
         product.setName(data.get("name"));
@@ -35,7 +39,12 @@ public class ProductService {
             product.setDiscountPrice(Double.parseDouble(data.get("discountPrice")));
         }
         product.setProductImage(data.get("productImage"));
-        product.setGalleryImages(Arrays.asList(data.get("galleryImages").split(",")));
+        String galleryImages = data.get("galleryImages");
+        if (galleryImages != null && !galleryImages.isEmpty()) {
+            product.setGalleryImages(Arrays.asList(galleryImages.split(",")));
+        } else {
+            product.setGalleryImages(Collections.emptyList());
+        }
         product.setCreatedDate(LocalDateTime.now());
         if (data.get("categoryId") != null && !data.get("categoryId").isEmpty()) {
             product.setCategoryId(Arrays.asList(data.get("categoryId").split(",")));
@@ -73,6 +82,8 @@ public class ProductService {
         if (data.get("brand") != null && !data.get("brand").isEmpty()) {
             product.setBrand(data.get("brand"));
         }
+        product.setSeoTitle(data.get("seoTitle"));
+        product.setMetaDescription(data.get("metaDescription"));
 
         ProductShipping productShipping = new ProductShipping();
         String shippingMethod = data.get("shippingMethod");
@@ -102,6 +113,10 @@ public class ProductService {
             return true;
         }
         return false;
+    }
+
+    public Optional<Product> findProductById(String productId){
+        return productRepo.findById(productId);
     }
 
     public Product findProductByStoreIdAndSlug(String storeId, String slug){

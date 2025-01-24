@@ -74,6 +74,19 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/fetch-product-by-id/{productId}")
+    public ResponseEntity<?> fetchProductById(@PathVariable String productId){
+        try {
+            Product product = productService.findProductById(productId).get();
+            System.out.println(product);
+            System.out.println(product.getName());
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
     @GetMapping("/fetch-product-by-domain")
     public ResponseEntity<?> fetchProductByDomain(@RequestParam("domain") String domain,
             @RequestParam("productSlug") String productSlug) {
@@ -132,10 +145,26 @@ public class ProductController {
     // @CacheEvict(value = "products", allEntries = true)
     public ResponseEntity<?> addProduct(@RequestBody Map<String, String> productData) {
         try {
+            System.out.println("Request recieved");
             Product product = productService.productInitializer(productData);
             productService.saveProduct(product);
             return ResponseEntity.ok(true);
         } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
+    @PutMapping("/update-product")
+    // @CacheEvict(value = "products", allEntries = true)
+    public ResponseEntity<?> updateProduct(@RequestBody Map<String, String> productData) {
+        try {
+            Product product = productService.productInitializer(productData);
+            productService.saveProduct(product);
+            return ResponseEntity.ok(true);
+        } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         }

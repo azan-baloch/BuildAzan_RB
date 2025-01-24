@@ -28,17 +28,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
 @Component
 public class JwtService {
-    
-    // private String jwtSecret = generateRandomString(85);
-
-    // public String generateRandomString(int length) {
-    //     StringBuilder sb = new StringBuilder();
-    //     for (int i = 0; i < length; i++) {
-    //         char c = (char) ('a' + Math.random() * 26);
-    //         sb.append(c);
-    //     }
-    //     return sb.toString();
-    // }
 
     private String jwtSecret = "ljkajedijed029384cxmvvsdjfHLEGKjjo3o2jilkmadkkgLrjr32ojlsfdfkjlsdf";
 
@@ -48,7 +37,6 @@ public class JwtService {
     }
 
     public String generateJwtToken(UserDetailsImpl userDetailsImpl){
-        System.out.println(jwtSecret);
         Map<String, Object> claims = new HashMap<>();
         claims.put("emailVerified", userDetailsImpl.isEmailVerified());
         claims.put("memberShipLevel", userDetailsImpl.getMemberShipLevel());
@@ -64,20 +52,14 @@ public class JwtService {
     }
 
     public void setTokenCookies(HttpServletResponse response, String token){
-        // ResponseCookie cookie = ResponseCookie.from("token", token)
-        // .httpOnly(true)
-        // .sameSite("None")
-        // .secure(false)
-        // .path("/")
-        // .maxAge(259200) // max-age : 3 days 
-        // .build();
-        // response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        Cookie cookie = new Cookie("token", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(259200); //  max-age : 3 days
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+        .httpOnly(true)
+        .sameSite("None")
+        .secure(true)
+        .path("/")
+        .maxAge(259200) // max-age : 3 days 
+        .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public String extractTokenFromCookie(HttpServletRequest request){

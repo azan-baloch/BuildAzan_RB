@@ -1,7 +1,6 @@
 package com.buildazan.entities;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -12,21 +11,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Document (collection = "pages")
+@Document
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Page {
+public class MediaLibrary {
     @Id
     private String id;
-    private String name;
     @Indexed
     private String storeId;
-    @Indexed
-    private String slug;
-    private List<Map<String, Object>> content;
-    private boolean isDefault;
-    private String metaTitle;
-    private String metaDescription;
+    private List<String> imageLinks;
 }

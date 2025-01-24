@@ -1,6 +1,7 @@
 package com.buildazan.restcontrollers;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -42,7 +43,7 @@ public class AuthController {
     private UserService userService;
 
     @GetMapping("/check-auth")
-    public ResponseEntity<?> checkAuth() {
+    public ResponseEntity<?> checkAuth() { 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -64,7 +65,7 @@ public class AuthController {
         // "error", "Step 2/2. Choose your plan or start free trial",
         // "redirectTo", "/pay"));
         // }
-        return ResponseEntity.ok(Map.of("isAuthorized", true));
+        return ResponseEntity.ok(Map.of("isAuthorized", true, "userId", userDetails.getUserId()));
     }
 
     @PostMapping("/login")
@@ -79,7 +80,7 @@ public class AuthController {
             String jwt = jwtService.generateJwtToken(userDetailsImpl);
             jwtService.setTokenCookies(response, jwt);
             return ResponseEntity
-                    .ok(Map.of("userId", userDetailsImpl.getUserId(), "storeId", userDetailsImpl.getStoreId()));
+                    .ok(Map.of("userId", userDetailsImpl.getUserId()));
         } catch (AuthenticationException e) {
             System.out.println(e);
             if (e instanceof BadCredentialsException || e instanceof UsernameNotFoundException) {
@@ -92,10 +93,16 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> details) {
+    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> details, HttpServletResponse response) {
         try {
             User savedUser = userService.userInitializer(details);
-            return ResponseEntity.ok(savedUser);
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(details.get("username"), details.get("password")));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
+            String jwt = jwtService.generateJwtToken(userDetailsImpl);
+            jwtService.setTokenCookies(response, jwt);
+
+            return ResponseEntity.ok().build();
         } catch (DuplicateKeyException e) {
             System.out.println(e);
             String errorMessage;

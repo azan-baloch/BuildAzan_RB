@@ -52,7 +52,7 @@ public class Product {
     //SEO
     private String seoTitle;
     private String metaDescription;
-    @Indexed(unique = true)
+    @Indexed
     private String slug;
     private Map<String, Object> schemaMarkup;
     //Shipping

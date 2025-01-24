@@ -1,5 +1,6 @@
 package com.buildazan.repo;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -13,8 +14,9 @@ import com.buildazan.entities.Store;
 @Repository
 public interface StoreRepo extends MongoRepository<Store, String>, StoreCustomRepo {
 
-    // @Query(value = "{'userId': ?0}")
-    // Store findStoreByUserId(String userId);s
+    @Query(value = "{'userId': ?0}")
+    List<Store> findStoresByUserId(String userId);
+    
     @Query(value = "{'domain' : ?0}")
     Store findByDomain(String domain);
 

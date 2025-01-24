@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Document (collection = "store")
@@ -22,21 +23,17 @@ public class Store {
 	private String storeId;
 	@Indexed(unique = true)
 	private String domain; 
-	private String description;
-	private String logo;
-	private String theme;
+	@Indexed
+	private String userId;
 	private String storeEmail;
 	private String storePhone;
 	private String address;
 	private String currency;
-	private List<String> productIds;
-	private List<String> categoryIds;
-	private List<String> orderIds;
-	private List<String> paymentMethods;
-	private List<String> shippingOptions;
-	private String privacyPolicy;
-	private String termsOfService;
-	private String status;
 	private Map<String, String> socialLinks;
+
+	public Store(String userId, String domain){
+		this.userId = userId;
+		this.domain = domain;
+	}
 
 }

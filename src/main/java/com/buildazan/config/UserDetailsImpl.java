@@ -78,8 +78,5 @@ public class UserDetailsImpl implements UserDetails{
 	public String getUserId(){
 		return user.getId();
 	}
-	public List<String> getStoreId(){
-		return user.getStoreIds();
-	}
 
 }

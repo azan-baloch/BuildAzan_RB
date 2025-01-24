@@ -67,8 +67,10 @@ public class SecurityConfig {
 		CorsConfiguration config = new CorsConfiguration();
 		config.setAllowCredentials(true);
 		// config.addAllowedOrigin("https://buildazaan.netlify.app/");
+		config.addAllowedOrigin("https://build-azan-frontend-swhm.vercel.app/");
 		config.addAllowedOrigin("http://localhost:5173/");
 		config.addAllowedOrigin("http://buildazan.com:5173/");
+		config.addAllowedOrigin("https://buildazaan.netlify.app/");
 		config.addAllowedOrigin("http://azanstore.buildazan.com:5173/");
 		config.addAllowedOrigin("http://awaisstore.buildazan.com:5173/");
 		config.addAllowedHeader("*");

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +36,16 @@ public class CategorController {
     public ResponseEntity<?> saveCategory(@RequestBody Category category) {
         try {
             category.setCreatedDate(LocalDateTime.now());
+            categoryService.saveCategory(category);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+    @PutMapping("/update-category")
+    public ResponseEntity<?> updateCategory(@RequestBody Category category) {
+        try {
             categoryService.saveCategory(category);
             return ResponseEntity.ok().build();
         } catch (Exception e) {

@@ -14,6 +14,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.Collections;
 
 @Service
@@ -32,10 +34,16 @@ public class UserService{
     private UserRepo userRepo;
 
     @Autowired
+    private PageService pageService;
+
+    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private AsyncService asyncService;
 
     
     public String generateSecurePassword(String password) {
@@ -48,15 +56,10 @@ public class UserService{
         user.setId(new ObjectId().toString());
         user.setUsername(caredentials.get("username"));
         user.setEmail(caredentials.get("email"));
-        // user.setFirstName(caredentials.get("firstName"));
-        // user.setLastName(caredentials.get("lastName"));
-        // user.setPhoneNumber(caredentials.get("phoneNumber"));
-        // user.setCountry(caredentials.get("country"));
-        // user.setCurrency(caredentials.get("currency"));
         user.setPassword(generateSecurePassword(caredentials.get("password")));
         user.setTermsAndConditionsAgreed(true);
 
-        //static details
+        //static details 
         user.setUserRole(UserRole.ROLE_USER);
         user.setEmailVerified(false);
         user.setPasswordLastChangedDate(LocalDateTime.now());
@@ -73,12 +76,17 @@ public class UserService{
         Store store = new Store();
         store.setStoreId(new ObjectId().toString());
         store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".buildazan.com");
-
-        user.setStoreIds(Collections.singletonList(store.getStoreId()));
-        mongoTemplate.save(user);
+        store.setUserId(user.getId());
+        mongoTemplate.save(user); 
         mongoTemplate.save(store);
+        pageService.createDefaultPages(store.getStoreId());
+        // CompletableFuture<User> userFuture = asyncService.saveUser(user);
+        // CompletableFuture<Void> storeFuture = asyncService.saveStore(store);
+        // CompletableFuture<Void> pageFuture = asyncService.saveDefaultPages(store.getStoreId());
 
-        return user;
+        // CompletableFuture.allOf(userFuture, storeFuture, pageFuture).join();
+
+        return user; 
     }
 
     public UserProjection findUserById(String id){

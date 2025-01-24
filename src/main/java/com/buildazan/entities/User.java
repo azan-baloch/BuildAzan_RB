@@ -38,16 +38,11 @@ public class User {
     private String verificationCode;
     private LocalDateTime expirationTime;
 
-    // Store Information
-    @Indexed
-    private List<String> storeIds;
-
     // Contact and Location
     private String country;
     private String phoneNumber;
 
     // Financial and Transactional
-    private double earnings;
     private List<String> paymentMethods;
 
     // Roles and Security
@@ -63,9 +58,6 @@ public class User {
     private String currency;
     private boolean termsAndConditionsAgreed;
     private boolean privacyPolicyAgreed;
-
-    // Communication and Interaction
-    private List<String> notifications;
     
     // Miscellaneous
     private String dateOfBirth;
