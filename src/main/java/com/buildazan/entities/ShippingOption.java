@@ -31,5 +31,4 @@ public class ShippingOption {
     private String shippingRegion;
     private String shippingType;
     private boolean enabled;
-
 }

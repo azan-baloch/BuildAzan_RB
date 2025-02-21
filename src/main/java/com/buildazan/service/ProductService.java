@@ -14,10 +14,13 @@ import org.springframework.stereotype.Service;
 
 import com.buildazan.entities.Product;
 import com.buildazan.entities.ProductShipping;
+import com.buildazan.entities.ProductVariation;
 import com.buildazan.entities.ShippingOption;
 import com.buildazan.projection.ProductProjection;
 import com.buildazan.projection.SlugProjection;
 import com.buildazan.repo.ProductRepo;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ProductService {
@@ -26,6 +29,7 @@ public class ProductService {
     private ProductRepo productRepo;
 
     public Product productInitializer(Map<String, String> data) {
+        System.out.println(data);
         Product product = new Product();
         if (data.get("id") != null && !data.get("id").isEmpty()) {
             product.setId(data.get("id"));
@@ -103,6 +107,19 @@ public class ProductService {
             default:
                 break;
         }
+
+        String variationsJson = data.get("variations");
+    if (variationsJson != null && !variationsJson.isEmpty()) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<ProductVariation> variationsList = mapper.readValue(
+                    variationsJson, new TypeReference<List<ProductVariation>>() {});
+            product.setVariations(variationsList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
         return product;
     }

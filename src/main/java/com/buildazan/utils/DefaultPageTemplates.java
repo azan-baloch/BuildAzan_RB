@@ -10,16 +10,16 @@ public class DefaultPageTemplates {
                 Map.of("name", "Home",
                         "slug", "home",
                         "contentGenerator",
-                        (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getHomePageContent)
-                // Map.of("name", "Product",
-                //         "slug", "product",
-                //         "contentGenerator",
-                //         (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getProductPageContent),
-                // Map.of("name", "About",
-                //         "slug", "about",
-                //         "default", false,
-                //         "contentGenerator",
-                //         (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getProductPageContent)
+                        (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getHomePageContent),
+                Map.of("name", "Product",
+                        "slug", "product",
+                        "contentGenerator",
+                        (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getProductPageContent),
+                Map.of("name", "About",
+                        "slug", "about",
+                        "default", false,
+                        "contentGenerator",
+                        (Supplier<List<Map<String, Object>>>) DefaultPageTemplates::getProductPageContent)
                         );
 
     };

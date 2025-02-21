@@ -1,6 +1,7 @@
 package com.buildazan.config;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -27,22 +28,22 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
-@EnableWebSecurity 
+@EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
+	private final UserDetailsService userDetailsService;
 	private final JwtAuthFilter jwtAuthFilter;
 
 	public SecurityConfig(JwtAuthFilter jwtAuthFilter, UserDetailsService userDetailsService) {
-        this.jwtAuthFilter = jwtAuthFilter;
-        this.userDetailsService = userDetailsService;
-    }
+		this.jwtAuthFilter = jwtAuthFilter;
+		this.userDetailsService = userDetailsService;
+	}
 
 	@Bean
 	BCryptPasswordEncoder bCryptPasswordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
+
 	@Bean
 	DaoAuthenticationProvider daoAuthenticationProvider() {
 		DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
@@ -50,59 +51,62 @@ public class SecurityConfig {
 		daoAuthenticationProvider.setPasswordEncoder(bCryptPasswordEncoder());
 		return daoAuthenticationProvider;
 	}
-	
+
 	// @Bean
 	// PersistentTokenRepository getPersistentTokenRepository() {
-	// 	return new MongoPersistantTokenRepository();
+	// return new MongoPersistantTokenRepository();
 	// }
 
 	@Bean
-	MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory databaseFactory){
+	MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory databaseFactory) {
 		return new MongoTransactionManager(databaseFactory);
 	}
 
 	@Bean
-	CorsFilter corsFilter(){
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowCredentials(true);
-		// config.addAllowedOrigin("https://buildazaan.netlify.app/");
-		config.addAllowedOrigin("https://build-azan-frontend-swhm.vercel.app/");
-		config.addAllowedOrigin("http://localhost:5173/");
-		config.addAllowedOrigin("http://buildazan.com:5173/");
-		config.addAllowedOrigin("https://buildazaan.netlify.app/");
-		config.addAllowedOrigin("http://azanstore.buildazan.com:5173/");
-		config.addAllowedOrigin("http://awaisstore.buildazan.com:5173/");
-		config.addAllowedHeader("*");
-		config.addAllowedMethod("*");	
-		source.registerCorsConfiguration("/**", config);
-		return new CorsFilter(source);
+	CorsFilter corsFilter() {
+		CorsConfiguration corsConfiguration = new CorsConfiguration();
+		corsConfiguration.setAllowCredentials(true);
+		corsConfiguration.addAllowedHeader("*");
+		corsConfiguration.addAllowedMethod("*");
+
+		return new CorsFilter(request -> {
+			String origin = request.getHeader("Origin");
+
+			if (origin != null && (origin.endsWith(".revboost.shop") || origin.equals("https://revboost.shop")
+					|| origin.equals("http://revboost.shop:5173") || origin.endsWith(".revboost.shop:5173"))) {
+				corsConfiguration.addAllowedOrigin(origin);
+			} else {
+				corsConfiguration.setAllowedOrigins(Collections.emptyList());
+			}
+
+			return corsConfiguration;
+		});
 	}
 
 	@Bean
-	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
+	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+			throws Exception {
 		return authenticationConfiguration.getAuthenticationManager();
 	}
 
 	// @Bean
 	// JavaMailSender javaMailSender(){
-	// 	return new JavaMailSenderImpl();
+	// return new JavaMailSenderImpl();
 	// }
-	
+
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.csrf(csrf -> csrf.disable())	
-			.authorizeHttpRequests(authorize -> authorize
-					.requestMatchers("/dashboard/**").authenticated()
-					.requestMatchers("/admin/**").authenticated()
-					.anyRequest().permitAll())
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authenticationProvider(daoAuthenticationProvider())
-			.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-		
+				.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(authorize -> authorize
+						.requestMatchers("/dashboard/**").authenticated()
+						.requestMatchers("/admin/**").authenticated()
+						.anyRequest().permitAll())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authenticationProvider(daoAuthenticationProvider())
+				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
 		return http.build();
 	}
 
-	
 }

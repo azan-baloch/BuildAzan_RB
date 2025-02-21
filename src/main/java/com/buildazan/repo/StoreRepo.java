@@ -10,12 +10,13 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.buildazan.entities.Store;
+import com.buildazan.projection.StoreProjection;
 
 @Repository
 public interface StoreRepo extends MongoRepository<Store, String>, StoreCustomRepo {
 
     @Query(value = "{'userId': ?0}")
-    List<Store> findStoresByUserId(String userId);
+    List<StoreProjection> findStoresByUserId(String userId);
     
     @Query(value = "{'domain' : ?0}")
     Store findByDomain(String domain);

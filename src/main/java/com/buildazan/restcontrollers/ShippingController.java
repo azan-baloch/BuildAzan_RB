@@ -48,10 +48,26 @@ public class ShippingController {
         }
     }
 
-    @GetMapping("/get-shippings")
+    @GetMapping("/find-by-storeid")
+    public ResponseEntity<?> findByStoreIdAndEnabled(@RequestParam String storeId){
+        try {
+            ShippingOption shipping = shippingService.findByStoreIdAndEnabled(storeId);
+            if (shipping!=null) {
+                return ResponseEntity.ok(shipping);
+            }else{
+                return ResponseEntity.ok("Shipping option not found");
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
+    @GetMapping("/get-shippings") 
     public ResponseEntity<?> getAllShippings(@RequestParam String storeId) {
         try {
-            return ResponseEntity.ok(shippingService.findShippingByStoreId(storeId));
+            return ResponseEntity.ok(shippingService.findAllShippingsByStoreId(storeId));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

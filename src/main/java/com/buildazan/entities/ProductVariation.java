@@ -1,6 +1,7 @@
 package com.buildazan.entities;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,15 +13,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariation {
-	private String id;
-	private String name;
-	private String value;
-	private double price;
-	private double discountPrice;
-	private int stock;
-	private List<String> image;
-	private double weight;
-	private String dimensions;
+	private Integer id;
+    private double price;
+    private double discountPrice;
+    private int stockQuantity;
 	private String sku;
-	
+	private String image;
+    // variationAttributes can store any custom attributes
+    // For example: {"color": "red", "size": "large"}
+    private Map<String, String> attributes;
 }

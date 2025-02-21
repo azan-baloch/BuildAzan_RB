@@ -75,11 +75,11 @@ public class UserService{
         
         Store store = new Store();
         store.setStoreId(new ObjectId().toString());
-        store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".buildazan.com");
+        store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".revboost.shop");
         store.setUserId(user.getId());
         mongoTemplate.save(user); 
         mongoTemplate.save(store);
-        pageService.createDefaultPages(store.getStoreId());
+        pageService.createDefaultPages(store.getStoreId(), store.getDomain());
         // CompletableFuture<User> userFuture = asyncService.saveUser(user);
         // CompletableFuture<Void> storeFuture = asyncService.saveStore(store);
         // CompletableFuture<Void> pageFuture = asyncService.saveDefaultPages(store.getStoreId());

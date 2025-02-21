@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 public interface ProductProjection {
     String getId();
+    String getSlug();
     String getStoreId();
     String getName();
     Double getPrice();

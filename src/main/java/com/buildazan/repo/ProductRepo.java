@@ -20,7 +20,7 @@ public interface ProductRepo extends MongoRepository<Product, String>, ProductCu
     Page<ProductProjection> findAllProjectionByStoreId(String storeId, Pageable pageable);
 
     @Query(value = "{ 'storeId': ?0 }", 
-           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
+           fields = "{ 'id': 1, 'storeId': 1, 'slug': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
     List<ProductProjection> findAllProjectionByStoreId(String storeId);
 
     List<Product> findAllProductsByStoreId(String storeId);

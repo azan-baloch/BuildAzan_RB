@@ -2,12 +2,15 @@ package com.buildazan.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.buildazan.entities.Store;
+import com.buildazan.projection.StoreProjection;
 import com.buildazan.repo.StoreRepo;
 
 @Service
@@ -23,14 +26,31 @@ public class StoreService {
     //     return storeRepo.findStoreByUserId(userId);
     // }
 
+    @Transactional
     public void createStore(Store store){
+        System.out.println(store.getDomain());
         Store createdStore = storeRepo.save(store); 
-        String createdStoreId = createdStore.getStoreId();
-        pageService.createDefaultPages(createdStoreId);
+        pageService.createDefaultPages(createdStore.getStoreId(), createdStore.getDomain());
     }
 
-    public List<Store> findStoresByUserId(String userId){
+    public Optional<Store> findCurrentStoreById(String storeId){
+        return storeRepo.findById(storeId);
+    }
+
+    public List<StoreProjection> findStoresByUserId(String userId){
         return storeRepo.findStoresByUserId(userId);
+    }
+
+    public void updateStoreGeneralDetails(Map<String, String> storeDetails){
+        storeRepo.updateStoreGeneralDetails(storeDetails);
+    }
+
+    public void updateStoreDomain(Map<String, String> payload){
+        storeRepo.udpateStoreDomain(payload);
+    }
+
+    public void deleteStore(String storeId){
+        storeRepo.deleteById(storeId);
     }
 
     public List<Store> findStoresByIds(List<String> storeIds){

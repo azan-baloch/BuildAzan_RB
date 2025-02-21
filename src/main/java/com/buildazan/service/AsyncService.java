@@ -34,11 +34,11 @@ public class AsyncService {
         return CompletableFuture.completedFuture(null);
     }
 
-    @Async
-    public CompletableFuture<Void> saveDefaultPages(String storeId) {
-        System.out.println("saveDefaultPages called on thread: " + Thread.currentThread().getName() + " at " + LocalDateTime.now());
-        pageService.createDefaultPages(storeId);
-        return CompletableFuture.completedFuture(null);
-    }
+    // @Async
+    // public CompletableFuture<Void> saveDefaultPages(String storeId) {
+    //     System.out.println("saveDefaultPages called on thread: " + Thread.currentThread().getName() + " at " + LocalDateTime.now());
+    //     pageService.createDefaultPages(storeId);
+    //     return CompletableFuture.completedFuture(null);
+    // }
     
 }

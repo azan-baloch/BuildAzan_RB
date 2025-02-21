@@ -36,11 +36,23 @@ public class PageController {
         }
     }
 
-    @GetMapping("/get-page")
-    public ResponseEntity<?> getPage(@RequestParam String storeId){
-        // String data = pageService.getPage(slug).getContent();
-        // return ResponseEntity.ok(data);
-        return ResponseEntity.ok(pageService.getPageByStoreId(storeId));   
+    @GetMapping("/get-page-by-id")
+    public ResponseEntity<?> getPageById(@RequestParam String pageId){
+        try {
+            System.out.println("pageId: " + pageId);
+            return ResponseEntity.ok(pageService.getPageById(pageId).get());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        } 
+    }
+    @GetMapping("/get-page-by-domain")
+    public ResponseEntity<?> getPageByDomain(@RequestParam String domain, @RequestParam String slug){
+        return ResponseEntity.ok(pageService.getPageByDomainAndSlug(domain, slug));   
+    }
+    @GetMapping("/get-pages-by-store-id")
+    public ResponseEntity<?> getPageByStoreId(@RequestParam String storeId){
+        return ResponseEntity.ok(pageService.getPagesByStoreId(storeId));   
     }
 
     @PutMapping("/update-page")

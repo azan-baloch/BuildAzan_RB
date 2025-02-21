@@ -33,12 +33,16 @@ public class ShippingService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    public List<ShippingOption> findShippingByStoreId(String storeId) {
+    public List<ShippingOption> findAllShippingsByStoreId(String storeId) {
         return shippingRepo.findAllByStoreId(storeId);
     }
 
     public Optional<ShippingOption> findShippingById(String id) {
         return shippingRepo.findById(id);
+    }
+
+    public ShippingOption findByStoreIdAndEnabled(String storeId){
+        return shippingRepo.findByStoreIdAndEnabled(storeId);
     }
 
     public void updateShippingStatus(Map<String, String> payload) {
