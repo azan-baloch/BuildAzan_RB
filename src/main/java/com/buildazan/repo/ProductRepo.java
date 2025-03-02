@@ -16,7 +16,7 @@ import com.buildazan.projection.SlugProjection;
 @Repository
 public interface ProductRepo extends MongoRepository<Product, String>, ProductCustomRepo {
     @Query(value = "{ 'storeId': ?0 }", 
-           fields = "{ 'id': 1, 'storeId': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
+           fields = "{ 'id': 1, 'storeId': 1, 'slug': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
     Page<ProductProjection> findAllProjectionByStoreId(String storeId, Pageable pageable);
 
     @Query(value = "{ 'storeId': ?0 }", 
@@ -29,6 +29,10 @@ public interface ProductRepo extends MongoRepository<Product, String>, ProductCu
 
     @Query(value = "{ 'storeId': ?0}")
     List<SlugProjection> findSlugsByStoreId(String storeId);
+
+    @Query(value = "{ 'storeId': ?0, 'categoryId': ?1 }", 
+           fields = "{ 'id': 1, 'storeId': 1, 'slug': 1, 'name': 1, 'price': 1, 'discountPrice': 1, 'createdDate': 1, 'trackInventory': 1, 'stockQuantity': 1, 'stockStatus': 1, 'productImage': 1, 'status': 1, 'categoryId': 1 }")
+    Page<ProductProjection> findByStoreIdAndCategoryId(String storeId, String categoryId, Pageable pageable);
 }   
 
 

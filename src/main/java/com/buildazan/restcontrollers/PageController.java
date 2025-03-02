@@ -55,6 +55,11 @@ public class PageController {
         return ResponseEntity.ok(pageService.getPagesByStoreId(storeId));   
     }
 
+    @GetMapping("/get-page-global-content")
+    public ResponseEntity<?> getPageGlobalContent(@RequestParam String storeId){
+        return ResponseEntity.ok(pageService.getGlobalContent(storeId));   
+    }
+
     @PutMapping("/update-page")
     public ResponseEntity<?> updatePage(@RequestBody Page page){
         try {
@@ -79,6 +84,32 @@ public class PageController {
         }
 
     }
+    @PutMapping("/update-global-content")
+    public ResponseEntity<?> updatePageGlobalContent(@RequestBody Map<String, Object> data){
+        try {
+            System.out.println(data);
+            // System.out.println(data.get("content"));
+            pageService.updatePageContent((String) data.get("id"), data.get("content"));
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+
+    }
+
+    @PutMapping("/update-all-content")
+public ResponseEntity<?> updatePageAllContent(@RequestBody Map<String, Object> data){
+    try {
+        System.out.println(data);
+        pageService.updatePageAllContent((String) data.get("id"), data);
+        return ResponseEntity.ok().build();
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "An unexpected error occurred on server, try again"));
+    }
+}
+
 
     @DeleteMapping("/delete/{pageId}")
     public ResponseEntity<?> deletePage(@PathVariable String pageId){

@@ -13,7 +13,7 @@ public interface ProductProjection {
     Boolean getTrackInventory();
     int getStockQuantity();
     Boolean getStockStatus();
-    String getProductImage();
+    String getProductImage(); 
     String getStatus();
     List<String> getCategoryId();
 }

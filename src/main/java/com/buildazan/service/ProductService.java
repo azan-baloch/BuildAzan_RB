@@ -9,7 +9,9 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.buildazan.entities.Product;
@@ -155,6 +157,36 @@ public class ProductService {
 
     public List<SlugProjection> findSlugByStoreId(String storeId){
         return productRepo.findSlugsByStoreId(storeId);
+    }
+
+    /**
+     * Fetch products by collection type.
+     * 
+     * @param storeId           the store id
+     * @param productCollection either "latest", "old" or a categoryId
+     * @param numberOfProductsStr number of products to fetch as String
+     * @return a Page of ProductProjection objects
+     */
+    public Page<ProductProjection> fetchProductsByCollection(String storeId, String productCollection, String numberOfProductsStr) {
+        int numberOfProducts = Integer.parseInt(numberOfProductsStr);
+        Pageable pageable;
+        Page<ProductProjection> products;
+
+        if ("latest".equalsIgnoreCase(productCollection)) {
+            // For latest products, sort descending by createdDate
+            pageable = PageRequest.of(0, numberOfProducts, Sort.by("createdDate").descending());
+            products = productRepo.findAllProjectionByStoreId(storeId, pageable);
+        } else if ("old".equalsIgnoreCase(productCollection)) {
+            // For old products, sort ascending by createdDate
+            pageable = PageRequest.of(0, numberOfProducts, Sort.by("createdDate").ascending());
+            products = productRepo.findAllProjectionByStoreId(storeId, pageable);
+        } else {
+            // Otherwise, treat the productCollection as a categoryId
+            pageable = PageRequest.of(0, numberOfProducts, Sort.by("createdDate").descending());
+            products = productRepo.findByStoreIdAndCategoryId(storeId, productCollection, pageable);
+        }
+
+        return products;
     }
 
     public void deleteProductById(String id) {

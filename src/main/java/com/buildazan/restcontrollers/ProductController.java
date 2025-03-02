@@ -118,6 +118,18 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/fetch-products-by-collection")
+    public ResponseEntity<?> fetchProductsByCollection(@RequestParam("storeId") String storeId,
+            @RequestParam("productCollection") String productCollection, @RequestParam("numberOfProducts") String numberOfProducts) {
+        try {
+            Page<ProductProjection> products = productService.fetchProductsByCollection(storeId, productCollection, numberOfProducts);
+            return ResponseEntity.ok(products.getContent());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
     @GetMapping("/filtered-products")
     // @Cacheable("products")
     public ResponseEntity<?> getFilteredProducts(

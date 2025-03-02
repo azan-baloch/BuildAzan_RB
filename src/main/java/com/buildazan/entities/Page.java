@@ -27,6 +27,7 @@ public class Page {
     private String slug;
     @Indexed
     private String storeDomain;
+    private List<Map<String, Object>> globalContent;
     private List<Map<String, Object>> content;
     private boolean isDefault;
     private String metaTitle;

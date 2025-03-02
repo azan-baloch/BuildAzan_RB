@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.buildazan.entities.Page;
+import com.buildazan.projection.GlobalContentProjection;
 import com.buildazan.projection.PagesProjection;
 import com.buildazan.repo.PageRepo;
 import com.buildazan.utils.DefaultPageTemplates;
@@ -69,8 +70,18 @@ public class PageService {
         return pageRepo.findPagesByStoreId(storeId);
     }
 
+    public GlobalContentProjection getGlobalContent(String storeId){
+        return pageRepo.findGlobalContentProjection(storeId, "home");
+    }
+
     public void upatePage(Page page){
         pageRepo.save(page);
+    };
+
+    public void updatePageGlobalContent(String pageId, Object content){
+        Query query = new Query(Criteria.where("id").is(pageId));
+        Update update = new Update().set("content", content);
+        mongoTemplate.updateFirst(query, update, Page.class);
     }
 
     public void updatePageContent(String pageId, Object content){
@@ -78,6 +89,15 @@ public class PageService {
         Update update = new Update().set("content", content);
         mongoTemplate.updateFirst(query, update, Page.class);
     }
+
+    public void updatePageAllContent(String pageId, Map<String, Object> contentData){
+        Query query = new Query(Criteria.where("id").is(pageId));
+        Update update = new Update()
+                            .set("content", contentData.get("normalContent"))
+                            .set("globalContent", contentData.get("globalContent"));
+        mongoTemplate.updateFirst(query, update, Page.class);
+    }
+    
 
     public void deleteById(String pageId){
         pageRepo.deleteById(pageId);
