@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,9 @@ import com.buildazan.projection.UserProjection;
 import com.buildazan.service.UserService;
 import com.buildazan.service.VerificationService;
 import com.mongodb.client.result.UpdateResult;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -130,5 +135,19 @@ public class UserController {
         userService.updateUserGeneralDetails(id, userDetails);
         return ResponseEntity.ok("Details updated successfully");
     }
+
+    @PostMapping("/logout")
+public ResponseEntity<?> logout(HttpServletResponse response) {
+    ResponseCookie cookie = ResponseCookie.from("token", "")
+            .httpOnly(true)
+            .secure(true) // use secure in production
+            .sameSite("None") // include sameSite attribute if needed
+            .path("/")
+            .maxAge(0) // expire immediately
+            .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+}
+
 
 }

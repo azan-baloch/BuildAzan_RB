@@ -46,12 +46,20 @@ public class PageService {
         page.setStoreDomain(storeDomain);
         page.setDefault((Boolean) template.getOrDefault("default", true));
         Supplier<List<Map<String, Object>>> contentGenerator = (Supplier<List<Map<String, Object>>>) template.get("contentGenerator");
-        page.setContent(contentGenerator.get());
+        Object generatedContent = contentGenerator.get();
+        if (generatedContent instanceof Map) {
+            Map<String, List<Map<String, Object>>> contentMap = (Map<String, List<Map<String, Object>>>) generatedContent;
+            page.setGlobalContent(contentMap.get("globalContent"));
+            page.setContent(contentMap.get("content"));
+        } else if (generatedContent instanceof List) {
+            page.setContent((List<Map<String, Object>>) generatedContent);
+        }
         return page;
     }
 
     public void savePage(Page page){
-        pageRepo.save(page);
+        page.setContent(List.of(Map.of("type", "customPage")));
+        pageRepo.save(page); 
     }
 
     public Optional<Page> getPageById(String pageId){
