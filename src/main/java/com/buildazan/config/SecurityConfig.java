@@ -72,8 +72,8 @@ public class SecurityConfig {
 		return new CorsFilter(request -> {
 			String origin = request.getHeader("Origin");
 
-			if (origin != null && (origin.endsWith(".revboost.shop") || origin.equals("https://revboost.shop")
-					|| origin.equals("http://revboost.shop:5173") || origin.endsWith(".revboost.shop:5173"))) {
+			if (origin != null && (origin.endsWith(".buildazan.com") || origin.equals("https://buildazan.com")
+					|| origin.equals("http://buildazan.com:5173") || origin.endsWith(".buildazan.com:5173"))) {
 				corsConfiguration.addAllowedOrigin(origin);
 			} else {
 				corsConfiguration.setAllowedOrigins(Collections.emptyList());
