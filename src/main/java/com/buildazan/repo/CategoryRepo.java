@@ -13,4 +13,6 @@ import com.buildazan.projection.SlugProjection;
 public interface CategoryRepo extends MongoRepository<Category, String> {
     @Query(value = "{ 'storeId': ?0}")
     List<SlugProjection> findSlugsByStoreId(String storeId);
+
+    long countByStoreId(String storeId);
 }

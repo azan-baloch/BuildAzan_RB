@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.buildazan.projection.PaymentProjection;
 import com.buildazan.projection.UserProjection;
 import com.buildazan.service.UserService;
 import com.buildazan.service.VerificationService;
@@ -66,9 +67,10 @@ public class UserController {
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtpToNewEmail(@RequestBody Map<String, String> payload) {
         try {
-            if (!verifcationService.sendOTP(payload.get("id"), payload.get("email"), "Otp", LocalDateTime.now())) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Otp not sent"));
-            }
+            // if (!verifcationService.sendOTP(payload.get("id"), payload.get("email"), "Otp", LocalDateTime.now())) {
+            //     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Otp not sent"));
+            // }
+            verifcationService.sendOTPById(payload.get("id"), payload.get("email"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occured on server, while sending Otp! Try again"));
@@ -121,7 +123,11 @@ public class UserController {
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> payload) {
         String newPassword = bCryptPasswordEncoder.encode(payload.get("newPassword"));
         try {
-            userService.changePassword(payload.get("id"), newPassword);
+            if (payload.get("id") != null) {
+                userService.changePassword(payload.get("id"), newPassword);
+            }else{
+                userService.changePasswordByEmail(payload.get("email"), newPassword);
+            }
             return ResponseEntity.ok("Password updated successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -134,6 +140,38 @@ public class UserController {
         String id = (String) userDetails.remove("id");
         userService.updateUserGeneralDetails(id, userDetails);
         return ResponseEntity.ok("Details updated successfully");
+    }
+
+    @PostMapping("/update-payment")
+    public ResponseEntity<?> updateUserPayment(@RequestBody Map<String, Object> payload) {
+        try {
+            UpdateResult updateResult = userService.updateUserPayment(payload);
+            if (updateResult.getModifiedCount() > 0) {
+                return ResponseEntity.ok("Payment updated successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Payment not updated"));
+            }
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occurred on server, while updating payment! Try again"));
+        }
+    }
+    
+
+    @GetMapping("/get-payment-details")
+    public ResponseEntity<?> getPaymentDetails(@RequestParam String userId) {
+        try {
+            PaymentProjection paymentProjection = userService.getUserPayment(userId);
+            return ResponseEntity.ok(paymentProjection);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server"));
+        }
     }
 
     @PostMapping("/logout")

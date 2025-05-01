@@ -6,6 +6,7 @@ import com.buildazan.entities.UserRole;
 import com.buildazan.enums.MemberShipLevel;
 import com.buildazan.enums.SubscriptionStatus;
 import com.buildazan.projection.PasswordProjection;
+import com.buildazan.projection.PaymentProjection;
 import com.buildazan.projection.UserExpirationTimeProjection;
 import com.buildazan.projection.UserProjection;
 import com.buildazan.repo.UserRepo;
@@ -41,10 +42,6 @@ public class UserService{
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
-    @Autowired
-    private AsyncService asyncService;
-
     
     public String generateSecurePassword(String password) {
         return bCryptPasswordEncoder.encode(password);
@@ -70,8 +67,14 @@ public class UserService{
         user.setRegistrationTimestamp(LocalDateTime.now());
         user.setPrivacyPolicyAgreed(true);
         user.setProfilePicture("defaultProfileImg.png");
+        // if (caredentials.get("subscriptionStatus") != null) {
+        //     user.setSubscriptionStatus((SubscriptionStatus) caredentials.get("subscriptionStatus"));
+        // }else{
+        //     user.setSubscriptionStatus(SubscriptionStatus.TRIAL);
+        // }
         user.setSubscriptionStatus(SubscriptionStatus.NONE);
         user.setMemberShipLevel(MemberShipLevel.NONE);
+        user.setSubscriptionStartDate(LocalDate.now());
         
         Store store = new Store();
         store.setStoreId(new ObjectId().toString());
@@ -80,6 +83,7 @@ public class UserService{
         mongoTemplate.save(user); 
         mongoTemplate.save(store);
         pageService.createDefaultPages(store.getStoreId(), store.getDomain());
+        
         // CompletableFuture<User> userFuture = asyncService.saveUser(user);
         // CompletableFuture<Void> storeFuture = asyncService.saveStore(store);
         // CompletableFuture<Void> pageFuture = asyncService.saveDefaultPages(store.getStoreId());
@@ -133,9 +137,15 @@ public class UserService{
     public UpdateResult verifyOtpAndChangeEmail(String id, String email, String otp){
         return userRepo.verifyOtpAndChangeEmail(id, email, otp);
     }
+    public UpdateResult verifyOtpByEmail(String otp, String email){
+        return userRepo.verifyOtpByEmail(otp, email);
+    }
 
     public void changePassword(String id, String newPassword) {
         userRepo.changePassword(id, newPassword);
+    }
+    public void changePasswordByEmail(String email, String newPassword) {
+        userRepo.changePasswordByEmail(email, newPassword);
     }
  
     public void deleteUserById(String userId) {
@@ -152,6 +162,46 @@ public class UserService{
 
     public boolean existsByEmail(String email) {
         return userRepo.existsByEmail(email);
+    }
+
+    public UpdateResult updateUserPayment(Map<String, Object> payload){
+        String userId = (String) payload.get("userId");
+        String memberShipLevelStr = (String) payload.get("memberShipLevel");
+        String subscriptionStatusStr = (String) payload.get("subscriptionStatus");
+     
+        MemberShipLevel memberShipLevel = MemberShipLevel.valueOf(memberShipLevelStr);
+        SubscriptionStatus subscriptionStatus = SubscriptionStatus.valueOf(subscriptionStatusStr);
+        
+        LocalDate subscriptionStartDate = LocalDate.now();
+        String billingCycle = ((String) payload.get("billingCycle")).toLowerCase();
+    
+        LocalDate subscriptionEndDate;
+        if (billingCycle.equalsIgnoreCase("trial")) {
+            if (userRepo.existsByIdAndTrialUsedTrue(userId)) {
+                throw new IllegalStateException("Trial already used");
+            }            
+            subscriptionEndDate = subscriptionStartDate.plusDays(3);
+        } else {
+            int multiplier;
+            switch (billingCycle) {
+                case "sixmonths":
+                    multiplier = 6;
+                    break;
+                case "yearly":
+                    multiplier = 12;
+                    break;
+                case "monthly":
+                default:
+                    multiplier = 1;
+                    break;
+            }
+            subscriptionEndDate = subscriptionStartDate.plusMonths(multiplier);
+        }
+        return userRepo.updateUserPayment(userId, subscriptionStatus, memberShipLevel, subscriptionStartDate, subscriptionEndDate);
+    }    
+
+    public PaymentProjection getUserPayment(String userId){
+        return userRepo.findPaymentById(userId); 
     }
 
     

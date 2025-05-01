@@ -113,8 +113,12 @@ public class StoreController {
     public ResponseEntity<?> updateStoreDomain(@RequestBody Map<String, String> payload) {
         try {
             storeService.updateStoreDomain(payload);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok("Domain updated");
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Domain name already exists! Use another name"));
         } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
@@ -130,4 +134,15 @@ public class StoreController {
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
     }
+
+    @GetMapping("/find-store-currency")
+    public ResponseEntity<?> findStoreCurrency(@RequestParam String domain){
+        try {
+            return ResponseEntity.ok(storeService.findStoreCurrency(domain));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        } 
+    }
+
 }

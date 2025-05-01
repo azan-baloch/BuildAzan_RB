@@ -69,5 +69,6 @@ public class User {
     private MemberShipLevel memberShipLevel;
     private LocalDate subscriptionStartDate;
     private LocalDate subscriptionEndDate;  
+    private boolean trialUsed = false;
     
 }

@@ -1,56 +1,142 @@
 package com.buildazan.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import com.buildazan.entities.Order;
+import com.buildazan.entities.OrderItem;
+
+import brevo.ApiClient;
+import brevo.Configuration;
+import brevoApi.TransactionalEmailsApi;
+import brevoModel.CreateSmtpEmail;
+import brevoModel.SendSmtpEmail;
+import brevoModel.SendSmtpEmailSender;
+import brevoModel.SendSmtpEmailTo;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
+@Slf4j
 @Service
-public class EmailService{
+public class EmailService {
 
-    // @Autowired
-    // private JavaMailSender mailSender;
+    private final String fromEmail;          // Verified sender email in Brevo
+    private final String brevoApiKey;          
+    private final String templatePath = "emails/";
 
-    
-    public boolean sendVerificationLinkEmail(String toEmail, String subject, String verificationCode) {
-        try {
-            // MimeMessage message = mailSender.createMimeMessage();
-            // MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            // helper.setTo(toEmail);
-            // helper.setSubject(subject);
-            // String htmlBody = "<html><body><h2>Verification Link</h2><p>Your verification link is: <a href=\"https://buildazaan.netlify.app/verify-link?link="
-            //         + verificationCode
-            //         + "\">Click here to verify</a></p><p>Do not share it with anyone.</p><p>Note: Link will expire in 10 minutes</p></body></html>";
-            // helper.setText(htmlBody, true);
-            // mailSender.send(message);
-            return true;
-        } catch (Exception e) {
-            System.out.println(e);
-            return false;
+    public EmailService(@Value("${brevo.api.key}") String brevoApiKey,
+                        @Value("${brevo.sender.email}") String fromEmail) {
+        this.brevoApiKey = brevoApiKey;
+        this.fromEmail = fromEmail;
+    }
+
+    public void sendVerificationEmail(String toEmail, String verificationCode) throws IOException {
+        System.out.println("Email link triggered");
+        String htmlBody = loadTemplate("verification-email.html")
+                .replace("{{verificationLink}}",
+                        "http://revboost.shop:5173/verify-link?link=" + verificationCode + ":" + toEmail);
+        sendEmail(toEmail, "Verify Your Account", htmlBody);
+    }
+
+    public void sendOtpEmail(String toEmail, String otp) throws IOException {
+        System.out.println("Email OTP triggered");
+        String htmlBody = loadTemplate("otp-email.html")
+                .replace("{{otp}}", otp);
+        sendEmail(toEmail, "Your One-Time Password (OTP)", htmlBody);
+    }
+
+    public void sendOrderConfirmation(String customerEmail,
+                                      String platformEmail,
+                                      Order order) throws IOException {
+        // Customer email
+        String customerHtml = loadTemplate("order-confirmation-customer.html")
+                .replace("{{orderId}}", order.getId())
+                .replace("{{customerName}}", order.getFullName())
+                .replace("{{orderItems}}", formatOrderItems(order.getOrderItems()))
+                .replace("{{totalAmount}}", String.format("%.2f", order.getTotalPrice()))
+                .replace("{{paymentMethod}}", order.getPaymentMethod())
+                .replace("{{shippingAddress}}", formatShippingAddress(order));
+        sendEmail(customerEmail, "Order Confirmation #" + order.getId(), customerHtml);
+
+        // Platform email
+        String platformHtml = loadTemplate("order-notification-platform.html")
+                .replace("{{orderId}}", order.getId())
+                .replace("{{storeId}}", order.getStoreId())
+                .replace("{{customerName}}", order.getFullName())
+                .replace("{{customerEmail}}", order.getEmail())
+                .replace("{{shippingAddress}}", formatShippingAddress(order))
+                .replace("{{orderItems}}", formatOrderItems(order.getOrderItems()))
+                .replace("{{totalPrice}}", String.format("%.2f", order.getTotalPrice()))
+                .replace("{{paymentStatus}}", order.getPaymentStatus())
+                .replace("{{shippingStatus}}", order.getShippingStatus());
+        sendEmail(platformEmail, "New Order Received #" + order.getId(), platformHtml);
+    }
+
+    private String formatShippingAddress(Order order) {
+        return String.format("%s, %s, %s %s, %s",
+                order.getAddress(),
+                order.getCity(),
+                order.getPostalCode(),
+                order.getCountry());
+    }
+
+    private String loadTemplate(String templateName) throws IOException {
+        ClassPathResource resource = new ClassPathResource(templatePath + templateName);
+        try (Scanner scanner = new Scanner(resource.getInputStream(), StandardCharsets.UTF_8)) {
+            return scanner.useDelimiter("\\A").next();
         }
     }
 
-    // Send OTP email
-    public boolean sendOTPEmail(String toEmail, String subject, String otp) {
+    private String formatOrderItems(List<OrderItem> items) {
+        StringBuilder sb = new StringBuilder();
+        items.forEach(item -> sb.append("<li>")
+            .append(item.getName()).append(" - ")
+            .append(item.getQuantity()).append(" x $")
+            .append(String.format("%.2f", item.getPrice()))
+            .append("</li>"));
+        return sb.toString();
+    }
+
+    /**
+     * This method sends the email using Brevo's Transactional Email API.
+     */
+    private void sendEmail(String toEmail, String subject, String htmlBody) {
         try {
-            // MimeMessage message = mailSender.createMimeMessage();
-            // MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            // helper.setTo(toEmail);
-            // helper.setSubject(subject);
-            // String htmlBody = "<html><body><h2>Your One-Time Password (OTP)</h2>"
-            //         + "<p>Your OTP is: <strong>" + otp + "</strong></p>"
-            //         + "<p>Please use this code within 10 minutes. Do not share it with anyone.</p>"
-            //         + "<p>Note: OTP will expire in 10 minutes.</p></body></html>";
-            // helper.setText(htmlBody, true);
-            // mailSender.send(message);
-            return true;
+            TransactionalEmailsApi apiInstance = getTransactionalEmailsApi();
+
+            SendSmtpEmail email = new SendSmtpEmail();
+
+            SendSmtpEmailSender sender = new SendSmtpEmailSender();
+            sender.setEmail(fromEmail);
+            email.sender(sender);
+
+            List<SendSmtpEmailTo> toList = new ArrayList<>();
+            SendSmtpEmailTo recipient = new SendSmtpEmailTo();
+            recipient.setEmail(toEmail);
+            toList.add(recipient);
+            email.setTo(toList);
+
+            email.setSubject(subject);
+            email.setHtmlContent(htmlBody);
+
+            CreateSmtpEmail response = apiInstance.sendTransacEmail(email);
+            log.info("Email sent to {} with subject: {}. Message ID: {}", toEmail, subject, response.getMessageId());
         } catch (Exception e) {
-            System.out.println(e);
-            return false;
+            log.error("Failed to send email to {} with subject: {}. Error: {}", toEmail, subject, e.getMessage());
         }
     }
 
+    /**
+     * Initializing and returning a TransactionalEmailsApi instance configured with Brevo API key.
+     */
+    private TransactionalEmailsApi getTransactionalEmailsApi() {
+        ApiClient apiClient = Configuration.getDefaultApiClient();
+        apiClient.setApiKey(brevoApiKey);
+        return new TransactionalEmailsApi(apiClient);
+    }
 }

@@ -1,55 +1,68 @@
+// VerificationService.java
 package com.buildazan.service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Service
-public class VerificationService{
-	
-	@Autowired
-	private EmailService emailService;
+public class VerificationService {
+    
+    private static final int EXPIRATION_MINUTES = 10;
+    private final EmailService emailService;
+    private final UserService userService;
 
-	@Autowired
-	private UserService userService;
-	
-	private static final int EXPIRATION_THRESHOLD_MINUTES = 10;
-	
-	public String generateVerificationCode() {
-		return UUID.randomUUID().toString();
-	}
-
-	public String generateOTP() {
-        return String.valueOf((int) (Math.random() * 900000) + 100000); // 6-digit OTP
+    public VerificationService(EmailService emailService, UserService userService) {
+        this.emailService = emailService;
+        this.userService = userService;
     }
-	
-	public boolean sendVerificationLink(String email, String subject, LocalDateTime expirationTime) {
-		String randomCode = generateVerificationCode();
-		userService.updateCodeAndExpiryByEmail(email, randomCode, expirationTime);
-	    String verificationCode = randomCode + ":" + email;
-		return emailService.sendVerificationLinkEmail(email, subject, verificationCode);
-	}
 
-	public boolean sendOTP(String id, String email, String subject, LocalDateTime expirationTime) {
+    public String generateVerificationCode() {
+        return UUID.randomUUID().toString();
+    }
+
+    public String generateOTP() {
+        return String.format("%06d", (int) (Math.random() * 900000) + 100000);
+    }
+
+    public void sendVerificationLink(String email) throws Exception {
+        System.out.println("Verfication link triggered");
+        String code = generateVerificationCode();
+        LocalDateTime expiration = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
+        
+        userService.updateCodeAndExpiryByEmail(email, code, expiration);
+        emailService.sendVerificationEmail(email, code);
+        log.info("Verification link sent to {}", email);
+    }
+
+    public void sendOTPById(String userId, String email) throws Exception {
+        System.out.println("Verfication OTP triggered");
         String otp = generateOTP();
-        userService.updateCodeAndExpiryById(id, otp, expirationTime);
-        return emailService.sendOTPEmail(email, subject, otp);
+        LocalDateTime expiration = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
+        
+        userService.updateCodeAndExpiryById(userId, otp, expiration);
+        emailService.sendOtpEmail(email, otp);
+        log.info("OTP sent to {}", email);
+    } 
+    public void sendOTPByEmail(String email) throws Exception {
+        System.out.println("Verfication OTP triggered");
+        String otp = generateOTP();
+        LocalDateTime expiration = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
+        
+        userService.updateCodeAndExpiryByEmail(email, otp, expiration);;
+        emailService.sendOtpEmail(email, otp);
+        log.info("OTP sent to {}", email);
+    } 
+
+    public boolean validateCode(String storedCode, LocalDateTime expiration, String inputCode) {
+        if (storedCode == null || expiration == null) return false;
+        return storedCode.equals(inputCode) && LocalDateTime.now().isBefore(expiration);
     }
-	
-	public boolean checkCodeExpiration(LocalDateTime expirationDateTime) {
-		Duration duration = Duration.between(expirationDateTime, LocalDateTime.now());
-		System.out.println(duration.toMinutes());
-		return duration.toMinutes() < EXPIRATION_THRESHOLD_MINUTES;
-	}
 
-	
-
-
-	
-
-
+    public boolean isCodeExpired(LocalDateTime expiration) {
+        return expiration == null || LocalDateTime.now().isAfter(expiration);
+    }
 }

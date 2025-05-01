@@ -21,7 +21,7 @@ public class DashboardController {
     @GetMapping("/stats")
     public ResponseEntity<?> dashboardStats(@RequestParam String storeId){
         try {
-            Map<String, Long> stats = dashboardService.dashboardStats("dfl");
+            Map<String, Object> stats = dashboardService.dashboardStats(storeId);
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

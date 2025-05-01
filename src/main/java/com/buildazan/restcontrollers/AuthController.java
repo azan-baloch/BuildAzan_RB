@@ -26,6 +26,7 @@ import com.buildazan.entities.User;
 import com.buildazan.enums.MemberShipLevel;
 import com.buildazan.enums.SubscriptionStatus;
 import com.buildazan.service.UserService;
+import com.buildazan.service.VerificationService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -42,6 +43,9 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private VerificationService verificationService;
+
     @GetMapping("/check-auth")
     public ResponseEntity<?> checkAuth() { 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -57,14 +61,18 @@ public class AuthController {
         // "error", "Step 1/2. Verify your email",
         // "redirectTo", "/verify-email"));
         // }
-        // else if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE)
-        // ||
-        // userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
-        // userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
-        // return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
-        // "error", "Step 2/2. Choose your plan or start free trial",
-        // "redirectTo", "/pay"));
-        // }
+         if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE)
+        ||
+        userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
+        userDetails.getSubscriptionStatus().equals(SubscriptionStatus.TRIAL_EXPIRED) ||
+        userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
+        "error", "Choose your plan or start free trial",
+        "redirectTo", "/billing",
+        "userId", userDetails.getUserId(),
+        "subscriptionStatus", userDetails.getSubscriptionStatus(),
+        "memberShipLevel", userDetails.getMemberShipLevel()));
+        }
         return ResponseEntity.ok(Map.of("isAuthorized", true, "userId", userDetails.getUserId()));
     }
 
@@ -96,6 +104,11 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> details, HttpServletResponse response) {
         try {
             User savedUser = userService.userInitializer(details);
+            try {
+                verificationService.sendVerificationLink(details.get("email"));
+            } catch (Exception e) {
+                System.out.println("Email not sent: " + e);
+            }
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(details.get("username"), details.get("password")));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();

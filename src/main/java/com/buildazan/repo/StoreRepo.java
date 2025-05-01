@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.buildazan.entities.Store;
+import com.buildazan.projection.StoreCurrencyProjection;
 import com.buildazan.projection.StoreProjection;
 
 @Repository
@@ -47,4 +48,6 @@ public interface StoreRepo extends MongoRepository<Store, String>, StoreCustomRe
             "{ $project: { 'products.slug': 1, 'categories.slug': 1 } }"
     })
     AggregationResults<Map<String, Object>> findAllSlugsForStore(String domain);
+
+    StoreCurrencyProjection findCurrencyByDomain(String domain);
 }

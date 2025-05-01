@@ -30,11 +30,12 @@ public class VerificationController {
     private UserService userService;
 
     @Autowired
-    private VerificationService VerificationService;
+    private VerificationService verificationService;
 
     @PostMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
+        System.out.println(email);
         try {
             boolean userExists = userService.existsByEmail(email);
             if (!userExists) {
@@ -45,10 +46,7 @@ public class VerificationController {
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         }
         try {
-            String subject = "Verification link";
-            if (!VerificationService.sendVerificationLink(email, subject, LocalDateTime.now())) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email not sent"));
-            }
+            verificationService.sendOTPByEmail(email);
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -64,6 +62,21 @@ public class VerificationController {
             if (updateResult.getModifiedCount() <= 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Link tampered or not correct, Wrong credentials"));
+            }
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> payload) {
+        try {
+            UpdateResult updateResult = userService.verifyOtpByEmail(payload.get("otp"), payload.get("email"));
+            if (updateResult.getModifiedCount() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "OTP incorrect or expired, request new one"));
             }
             return ResponseEntity.ok().build();
         } catch (Exception e) {

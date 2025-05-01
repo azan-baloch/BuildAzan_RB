@@ -58,7 +58,8 @@ public class PageService {
     }
 
     public void savePage(Page page){
-        page.setContent(List.of(Map.of("type", "customPage")));
+        // page.setContent(List.of(Map.of("type", "customPage")));
+        page.setContent(new ArrayList<>());
         pageRepo.save(page); 
     }
 
@@ -66,7 +67,7 @@ public class PageService {
         return pageRepo.findById(pageId);
     }
 
-    public Page getPageByDomainAndSlug(String domain, String slug){
+    public Optional<Page> getPageByDomainAndSlug(String domain, String slug){
         return pageRepo.findPageByStoreDomainAndSlug(domain, slug);
     }
 
@@ -78,8 +79,8 @@ public class PageService {
         return pageRepo.findPagesByStoreId(storeId);
     }
 
-    public GlobalContentProjection getGlobalContent(String storeId){
-        return pageRepo.findGlobalContentProjection(storeId, "home");
+    public GlobalContentProjection getGlobalContent(String storeDomain){
+        return pageRepo.findGlobalContentProjection(storeDomain, "home");
     }
 
     public void upatePage(Page page){
@@ -109,6 +110,24 @@ public class PageService {
 
     public void deleteById(String pageId){
         pageRepo.deleteById(pageId);
+    }
+
+    public void updateSeo(Map<String, String> data){
+        Query query = new Query(Criteria.where("storeId").is(data.get("storeId"))
+                                .and("slug").is(data.get("slug")));
+        Update update = new Update()
+                                .set("metaTitle", data.get("metaTitle"))
+                                .set("metaDescription", data.get("metaDescription"));
+        mongoTemplate.updateFirst(query, update, Page.class);
+    }
+
+    public void updateHeader(Map<String, String> data){
+        Query query = new Query(Criteria.where("storeId").is(data.get("storeId"))
+                                .and("slug").is(data.get("slug")));
+        Update update = new Update()
+                                .set("metaTitle", data.get("metaTitle"))
+                                .set("metaDescription", data.get("metaDescription"));
+        mongoTemplate.updateFirst(query, update, Page.class);
     }
     
 }

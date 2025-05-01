@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.buildazan.entities.Store;
+import com.buildazan.projection.StoreCurrencyProjection;
 import com.buildazan.projection.StoreProjection;
 import com.buildazan.repo.StoreRepo;
 
@@ -67,6 +68,10 @@ public class StoreService {
 
     public AggregationResults<Map<String, Object>> findAllSlugsForStore(String domain){
         return storeRepo.findAllSlugsForStore(domain);
+    }
+
+    public StoreCurrencyProjection findStoreCurrency(String domain){
+        return storeRepo.findCurrencyByDomain(domain);
     }
     
 }

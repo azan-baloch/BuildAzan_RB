@@ -1,5 +1,6 @@
 package com.buildazan.repo;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
@@ -14,6 +15,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import com.buildazan.entities.User;
+import com.buildazan.enums.MemberShipLevel;
+import com.buildazan.enums.SubscriptionStatus;
 import com.mongodb.client.result.UpdateResult;
 
 public class UserCustomRepoImpl implements UserCustomRepo {
@@ -97,6 +100,40 @@ public class UserCustomRepoImpl implements UserCustomRepo {
                 Query.query(Criteria.where("_id").is(id)),
                 new Update().set("password", newPassword),
                 User.class);
+    }
+
+    @Override
+    public void changePasswordByEmail(String email, String newPassword) {
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("email").is(email)),
+                new Update().set("password", newPassword),
+                User.class);
+    }
+
+    @Override
+    public UpdateResult verifyOtpByEmail(String otp, String email) {
+        return mongoTemplate.updateFirst(
+                new Query(Criteria.where("email").is(email)
+                        .and("verificationCode").is(otp)
+                        .and("expirationTime").gt(new Date(System.currentTimeMillis() - 15 * 60 * 1000))), 
+                new Update()
+                        .set("verificationCode", UUID.randomUUID()), 
+                User.class);
+    }
+
+    @Override
+    public UpdateResult updateUserPayment(String userId, SubscriptionStatus subscriptionStatus, MemberShipLevel memberShipLevel,
+            LocalDate subscriptionStartDate, LocalDate subscriptionEndDate) {
+                return mongoTemplate.updateFirst(
+                        Query.query(Criteria.where("_id").is(userId)),
+                        new Update()
+                                .set("subscriptionStatus", subscriptionStatus)
+                                .set("memberShipLevel", memberShipLevel)
+                                .set("subscriptionStartDate", subscriptionStartDate)
+                                .set("subscriptionEndDate", subscriptionEndDate)
+                                .set("trialUsed", true),
+                        User.class);
+        
     }
 
 }
