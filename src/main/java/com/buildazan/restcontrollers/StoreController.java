@@ -63,7 +63,7 @@ public class StoreController {
     @PostMapping("/create-store")
     public ResponseEntity<?> createStore(@RequestBody Map<String, String> payload){
         try {
-            String storeName = payload.get("storename") + ".revboost.shop";
+            String storeName = payload.get("storename") + ".buildazan.com";
             storeService.createStore(new Store(payload.get("userId"), storeName));
             return ResponseEntity.ok().build();
         } catch (DuplicateKeyException e) {

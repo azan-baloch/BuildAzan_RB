@@ -78,7 +78,7 @@ public class UserService{
         
         Store store = new Store();
         store.setStoreId(new ObjectId().toString());
-        store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".revboost.shop");
+        store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".buildazan.com");
         store.setUserId(user.getId());
         mongoTemplate.save(user); 
         mongoTemplate.save(store);
