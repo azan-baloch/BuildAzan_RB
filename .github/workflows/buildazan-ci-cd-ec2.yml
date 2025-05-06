@@ -1,0 +1,46 @@
+name: buildazan-rb
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Build Project
+        run: mvn clean install -DskipTests
+      - name: Login to docker hub
+        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+      - name: Build docker image
+        run: docker build -t azan06/buildazan-rb:0.1 .
+      - name: Publish image to docker hub
+        run: docker push azan06/buildazan-rb:0.1
+
+    deploy:
+    needs: build
+    runs-on: [buildazan-rb-ec2-runner]
+    steps:
+      - name: Pull Image from docker hub
+        run: docker pull azan06/buildazan-rb:0.1
+
+      - name: Delete old container
+        run: docker rm -f buildazan-rb-container
+
+      - name: Run docker container
+        run: |
+          docker run -d -p 8080:8080 \
+            --name buildazan-rb-container \
+            -e SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }} \
+            -e SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }} \
+            -e SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }} \
+            -e BREVO_API_KEY=${{ secrets.BREVO_API_KEY }} \
+            -e BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }} \
+            azan06/buildazan-rb:0.1
