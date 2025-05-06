@@ -1,54 +1,57 @@
-name: CI/CD → Elastic Beanstalk
+name: Deploy Spring Boot to AWS Elastic Beanstalk
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      # 1️⃣ Checkout the repository
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3️⃣ Build the Spring Boot JAR
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # 4️⃣ Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Upload JAR
+        uses: actions/upload-artifact@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          name: spring-app
+          path: target/*.jar
 
-      # 5️⃣ Install Elastic Beanstalk CLI
-      - name: Install Elastic Beanstalk CLI
-        run: |
-          pip install --upgrade pip
-          pip install awsebcli==3.20.3  # Specific version that works with AL2023
-
-      # 6️⃣ Initialize EB CLI (non-interactive)
-      - name: Initialize EB CLI
-        run: |
-          eb init ${{ secrets.EB_APP_NAME }} \
-            --platform "Corretto 17 running on 64bit Amazon Linux 2023" \
-            --region ${{ secrets.AWS_REGION }} \
-            --verbose
-
-      # 7️⃣ Deploy directly using environment name
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Download JAR
+        uses: actions/download-artifact@v3
+        with:
+          name: spring-app
+          
       - name: Deploy to Elastic Beanstalk
-        run: |
-          eb deploy ${{ secrets.EB_ENV_NAME }} \
-            --staged \
-            --env-vars "SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }},SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }},SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }},BREVO_API_KEY=${{ secrets.BREVO_API_KEY }},BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}"
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ secrets.EB_APP_NAME }}
+          environment_name: ${{ secrets.EB_ENV_NAME }}
+          # version_label: build-${{ github.run_id }}
+          region: ${{ secrets.AWS_REGION }}
+          deployment_package: BuildAzan-0.0.1-SNAPSHOT.jar
+          environment_variables: '{
+            "SPRING_DATA_MONGODB_URI": "${{ secrets.SPRING_DATA_MONGODB_URI }}",
+            "SPRING_DATA_MONGODB_DATABASE": "${{ secrets.SPRING_DATA_MONGODB_DATABASE }}",
+            "BREVO_API_KEY": "${{ secrets.BREVO_API_KEY }}",
+            "BREVO_SENDER_EMAIL": "${{ secrets.BREVO_SENDER_EMAIL }}"
+          }'
