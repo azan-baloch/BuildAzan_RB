@@ -11,7 +11,7 @@ jobs:
     steps:
       # 1️⃣ Checkout the repository
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2️⃣ Set up JDK 17
       - name: Set up JDK 17
@@ -36,29 +36,19 @@ jobs:
       - name: Install Elastic Beanstalk CLI
         run: |
           pip install --upgrade pip
-          pip install awsebcli
+          pip install awsebcli==3.20.3  # Specific version that works with AL2023
 
       # 6️⃣ Initialize EB CLI (non-interactive)
       - name: Initialize EB CLI
         run: |
           eb init ${{ secrets.EB_APP_NAME }} \
-            --platform "Java 17 Corretto 17 running on 64bit Amazon Linux 2023" \
+            --platform "Corretto 17 running on 64bit Amazon Linux 2023" \
             --region ${{ secrets.AWS_REGION }} \
             --verbose
 
-      # 7️⃣ Select the EB environment
-      - name: Use EB environment
-        run: eb use ${{ secrets.EB_ENV_NAME }}
-
-      # 8️⃣ Set EB environment variables
-      - name: Set EB environment variables
-        run: eb setenv \
-          SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }} \
-          SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }} \
-          SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }} \
-          BREVO_API_KEY=${{ secrets.BREVO_API_KEY }} \
-          BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
-
-      # 9️⃣ Deploy the application
+      # 7️⃣ Deploy directly using environment name
       - name: Deploy to Elastic Beanstalk
-        run: eb deploy ${{ secrets.EB_ENV_NAME }} --staged
+        run: |
+          eb deploy ${{ secrets.EB_ENV_NAME }} \
+            --staged \
+            --env-vars "SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }},SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }},SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }},BREVO_API_KEY=${{ secrets.BREVO_API_KEY }},BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}"
