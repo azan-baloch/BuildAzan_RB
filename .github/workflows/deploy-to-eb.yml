@@ -22,7 +22,7 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: Upload JAR artifact
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: spring-app
@@ -32,13 +32,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
-
+    
     steps:
-      - name: Download JAR artifact
+      - name: Download JAR
         uses: actions/download-artifact@v4
         with:
           name: spring-app
-
+          
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
@@ -49,9 +49,9 @@ jobs:
           environment_name:   ${{ secrets.EB_ENV_NAME }}
           version_label:      build-${{ github.run_id }}
           deployment_package: **spring-app**/**/*.jar
-          environment_variables: |
-            SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}
-            SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
-            SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}
-            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-            BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
+          environment_variables: '{
+            "SPRING_DATA_MONGODB_URI": "${{ secrets.SPRING_DATA_MONGODB_URI }}",
+            "SPRING_DATA_MONGODB_DATABASE": "${{ secrets.SPRING_DATA_MONGODB_DATABASE }}",
+            "BREVO_API_KEY": "${{ secrets.BREVO_API_KEY }}",
+            "BREVO_SENDER_EMAIL": "${{ secrets.BREVO_SENDER_EMAIL }}"
+          }'
