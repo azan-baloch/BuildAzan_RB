@@ -38,10 +38,9 @@ jobs:
           pip install --upgrade pip
           pip install awsebcli
 
-      # 6️⃣ Initialize EB CLI (without explicit platform to let EB detect Java 17)
+      # 6️⃣ Initialize EB CLI (non-interactive, uses existing environment defaults)
       - name: Initialize EB CLI
-        run: |
-          eb init ${{ secrets.EB_APP_NAME }} --region ${{ secrets.AWS_REGION }} --verbose
+        run: eb init ${{ secrets.EB_APP_NAME }} --region ${{ secrets.AWS_REGION }} --interactive false --verbose
 
       # 7️⃣ Select the EB environment
       - name: Use EB environment
