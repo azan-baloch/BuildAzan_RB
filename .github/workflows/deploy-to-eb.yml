@@ -38,13 +38,10 @@ jobs:
           pip install --upgrade pip
           pip install awsebcli
 
-      # 6️⃣ Initialize EB CLI
+      # 6️⃣ Initialize EB CLI (without explicit platform to let EB detect Java 17)
       - name: Initialize EB CLI
         run: |
-          eb init ${{ secrets.EB_APP_NAME }} \
-            --platform java-corretto-17 \
-            --region ${{ secrets.AWS_REGION }} \
-            --verbose
+          eb init ${{ secrets.EB_APP_NAME }} --region ${{ secrets.AWS_REGION }} --verbose
 
       # 7️⃣ Select the EB environment
       - name: Use EB environment
@@ -61,5 +58,4 @@ jobs:
 
       # 9️⃣ Deploy the application
       - name: Deploy to Elastic Beanstalk
-        run: |
-          eb deploy ${{ secrets.EB_ENV_NAME }} --staged
+        run: eb deploy ${{ secrets.EB_ENV_NAME }} --staged
