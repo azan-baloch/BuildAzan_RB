@@ -6,35 +6,40 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
+
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
+
       - name: Build Project
         run: mvn clean install -DskipTests
-      - name: Login to docker hub
-        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-      - name: Build docker image
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
         run: docker build -t azan06/buildazan-rb:0.1 .
-      - name: Publish image to docker hub
+
+      - name: Publish image to Docker Hub
         run: docker push azan06/buildazan-rb:0.1
 
-    deploy:
+  deploy:
     needs: build
-    runs-on: [buildazan-rb-ec2-runner]
+    runs-on: buildazan-rb-ec2-runner
     steps:
-      - name: Pull Image from docker hub
+      - name: Pull image from Docker Hub
         run: docker pull azan06/buildazan-rb:0.1
 
       - name: Delete old container
-        run: docker rm -f buildazan-rb-container
+        run: docker rm -f buildazan-rb-container || true
 
-      - name: Run docker container
+      - name: Run Docker container
         run: |
           docker run -d -p 8080:8080 \
             --name buildazan-rb-container \
