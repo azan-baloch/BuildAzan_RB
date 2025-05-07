@@ -31,7 +31,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: buildazan-rb-ec2-runner
+    runs-on: buildazan-rb-runner
     steps:
       - name: Pull image from Docker Hub
         run: docker pull azan06/buildazan-rb:0.1
