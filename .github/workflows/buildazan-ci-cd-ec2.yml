@@ -34,14 +34,14 @@ jobs:
     runs-on: buildazan-rb-runner
     steps:
       - name: Pull image from Docker Hub
-        run: docker pull azan06/buildazan-rb:0.1
+        run: sudo docker pull azan06/buildazan-rb:0.1
 
       - name: Delete old container
-        run: docker rm -f buildazan-rb-container || true
+        run: sudo docker rm -f buildazan-rb-container || true
 
       - name: Run Docker container
         run: |
-          docker run -d -p 8080:8080 \
+          sudo docker run -d -p 8080:8080 \
             --name buildazan-rb-container \
             -e SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }} \
             -e SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }} \
