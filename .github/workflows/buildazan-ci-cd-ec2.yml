@@ -33,7 +33,7 @@ jobs:
     needs: build
     runs-on: buildazan-rb-runner
     steps:
-      - name: Pull image from Docker Hub
+      - name: Pull image from Docker Hub 
         run: sudo docker pull azan06/buildazan-rb:0.1
 
       - name: Delete old container
