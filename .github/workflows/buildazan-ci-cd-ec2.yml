@@ -47,12 +47,6 @@ jobs:
 
       - name: Restart application on EC2
         uses: appleboy/ssh-action@v0.1.6
-        env:
-          SPRING_DATA_MONGODB_URI: ${{ secrets.SPRING_DATA_MONGODB_URI }}
-          SPRING_DATA_MONGODB_DATABASE: ${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
-          SPRING_DATA_MONGODB_AUTO_INDEX_CREATION: ${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-          BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
