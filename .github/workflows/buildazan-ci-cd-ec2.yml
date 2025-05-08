@@ -51,15 +51,20 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Export environment variables for Spring Boot
-            export SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}
-            export SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
-            export SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}
-            export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-            export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
+            set -eux
 
-            # Stop any running instance
-            pkill -f 'java -jar' || true
+            # 1) Export your env vars
+            export SPRING_DATA_MONGODB_URI='${{ secrets.SPRING_DATA_MONGODB_URI }}'
+            export SPRING_DATA_MONGODB_DATABASE='${{ secrets.SPRING_DATA_MONGODB_DATABASE }}'
+            export SPRING_DATA_MONGODB_AUTO_INDEX_CREATION='${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}'
+            export BREVO_API_KEY='${{ secrets.BREVO_API_KEY }}'
+            export BREVO_SENDER_EMAIL='${{ secrets.BREVO_SENDER_EMAIL }}'
 
-            # Start the application with exported env vars
+            # 2) Kill only the old Spring Boot process
+            pkill -f 'java -jar /home/ec2-user/app/' || true
+
+            # 3) Start the new JAR in the background
             nohup java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 &
+
+            # 4) Explicitly exit 0 so the SSH step is marked success
+            exit 0
