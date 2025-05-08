@@ -34,6 +34,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: spring-jar
+          path: ./downloaded-jar  # Specify download directory
 
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.4
@@ -41,30 +42,31 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "*.jar"
+          source: "downloaded-jar/*.jar"  # Adjusted path
           target: "/home/ec2-user/app/"
 
-      - name: Restart application on EC2 with environment variables
+      - name: Restart application on EC2
         uses: appleboy/ssh-action@v0.1.6
+        env:
+          SPRING_DATA_MONGODB_URI: ${{ secrets.SPRING_DATA_MONGODB_URI }}
+          SPRING_DATA_MONGODB_DATABASE: ${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
+          SPRING_DATA_MONGODB_AUTO_INDEX_CREATION: ${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -eux
-
-            # 1) Export your env vars
-            export SPRING_DATA_MONGODB_URI='${{ secrets.SPRING_DATA_MONGODB_URI }}'
-            export SPRING_DATA_MONGODB_DATABASE='${{ secrets.SPRING_DATA_MONGODB_DATABASE }}'
-            export SPRING_DATA_MONGODB_AUTO_INDEX_CREATION='${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}'
-            export BREVO_API_KEY='${{ secrets.BREVO_API_KEY }}'
-            export BREVO_SENDER_EMAIL='${{ secrets.BREVO_SENDER_EMAIL }}'
-
-            # 2) Kill only the old Spring Boot process
-            pkill -f 'java -jar /home/ec2-user/app/' || true
-
-            # 3) Start the new JAR in the background
-            nohup java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 &
-
-            # 4) Explicitly exit 0 so the SSH step is marked success
-            exit 0
+            # Kill the application
+            pkill -f 'java -jar /home/ec2-user/app/myapp.jar' || true
+            # Wait for process termination
+            sleep 5
+            # Start new JAR with environment variables
+            nohup java -jar /home/ec2-user/app/myapp.jar \
+              --spring.data.mongodb.uri="$SPRING_DATA_MONGODB_URI" \
+              --spring.data.mongodb.database="$SPRING_DATA_MONGODB_DATABASE" \
+              --spring.data.mongodb.auto-index-creation="$SPRING_DATA_MONGODB_AUTO_INDEX_CREATION" \
+              --brevo.api.key="$BREVO_API_KEY" \
+              --brevo.sender.email="$BREVO_SENDER_EMAIL" > /home/ec2-user/app/app.log 2>&1 &
