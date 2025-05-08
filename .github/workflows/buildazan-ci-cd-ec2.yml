@@ -41,4 +41,4 @@ jobs:
 
       - name: Run Docker container
         run: |
-          sudo docker run -d -p 8080:8080 --name buildazan-rb-container -e SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }} -e SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }} -e SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }} -e BREVO_API_KEY=${{ secrets.BREVO_API_KEY }} -e BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }} azan06/buildazan-rb:0.1
+          sudo docker run -d -p 8080:8080 --name buildazan-rb-container azan06/buildazan-rb:0.1
