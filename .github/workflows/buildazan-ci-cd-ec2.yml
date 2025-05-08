@@ -1,4 +1,4 @@
-name: buildazan-rb
+name: Build & Deploy Spring Boot JAR to EC2
 
 on:
   push:
@@ -11,33 +11,55 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Setup Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Build Project
-        run: mvn clean install -DskipTests
+      - name: Build Spring Boot JAR
+        run: mvn clean package -DskipTests
 
-      - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker image
-        run: docker build -t azan06/buildazan-rb:0.1 .
-
-      - name: Publish image to Docker Hub
-        run: docker push azan06/buildazan-rb:0.1
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-jar
+          path: target/*.jar
 
   deploy:
     needs: build
-    runs-on: buildazan-rb-runner
+    runs-on: ubuntu-latest
     steps:
-      - name: Pull image from Docker Hub 
-        run: sudo docker pull azan06/buildazan-rb:0.1
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spring-jar
 
-      - name: Delete old container
-        run: sudo docker rm -f buildazan-rb-container || true
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "*.jar"
+          target: "/home/ec2-user/app/"
 
-      - name: Run Docker container
-        run: sudo docker run -d -p 8080:8080 --name buildazan-rb-container -e SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }} -e SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }} -e SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }} -e BREVO_API_KEY=${{ secrets.BREVO_API_KEY }} -e BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }} azan06/buildazan-rb:0.1
+      - name: Restart application on EC2 with environment variables
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Export environment variables for Spring Boot
+            export SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}
+            export SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
+            export SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=${{ secrets.SPRING_DATA_MONGODB_AUTO_INDEX_CREATION }}
+            export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+            export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
+
+            # Stop any running instance
+            pkill -f 'java -jar' || true
+
+            # Start the application with exported env vars
+            nohup java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 &
