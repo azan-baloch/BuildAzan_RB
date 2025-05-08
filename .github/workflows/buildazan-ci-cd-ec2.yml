@@ -34,7 +34,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: spring-jar
-          path: ./downloaded-jar  # Specify download directory
+          path: ./downloaded-jar
 
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.4
@@ -42,7 +42,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "downloaded-jar/*.jar"  # Adjusted path
+          source: "downloaded-jar/*.jar"
           target: "/home/ec2-user/app/"
 
       - name: Restart application on EC2
@@ -59,14 +59,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -eux
-            # Kill the application
-            pkill -f 'java -jar /home/ec2-user/app/myapp.jar' || true
+            # Kill the application (match actual JAR name)
+            pkill -f 'java -jar /home/ec2-user/app/BuildAzan-.*.jar' || true
+            
             # Wait for process termination
-            sleep 5
-            # Start new JAR with environment variables
-            nohup java -jar /home/ec2-user/app/myapp.jar \
-              --spring.data.mongodb.uri="$SPRING_DATA_MONGODB_URI" \
-              --spring.data.mongodb.database="$SPRING_DATA_MONGODB_DATABASE" \
-              --spring.data.mongodb.auto-index-creation="$SPRING_DATA_MONGODB_AUTO_INDEX_CREATION" \
-              --brevo.api.key="$BREVO_API_KEY" \
-              --brevo.sender.email="$BREVO_SENDER_EMAIL" > /home/ec2-user/app/app.log 2>&1 &
+            sleep 3
+            
+            # Start new JAR (use wildcard to match versioned name)
+            nohup java -jar /home/ec2-user/app/BuildAzan-*.jar > /home/ec2-user/app/app.log 2>&1 &
