@@ -39,7 +39,7 @@ jobs:
       - name: Delete old container
         run: sudo docker rm -f buildazan-rb-container || true
 
-      - name: Run Docker container 
+      - name: Run Docker container
         run: |
           sudo docker run -d -p 8080:8080 \
             --name buildazan-rb-container \
