@@ -1,9 +1,6 @@
 # Ignore .class files
 *.class
 
-# Ignore application.properties file
-application.properties
-
 # Ignore VS Code related files
 .vscode/
 
@@ -26,3 +23,5 @@ logs/
 tmp/
 
 temp/
+
+.env
