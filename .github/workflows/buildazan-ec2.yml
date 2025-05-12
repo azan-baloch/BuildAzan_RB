@@ -1,0 +1,46 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build with Maven (skip tests)
+      run: mvn clean package -DskipTests
+
+    - name: Copy JAR to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "target/BuildAzan-0.0.1-SNAPSHOT.jar"
+        target: "/home/ec2-user/BuildAzan"
+
+    - name: SSH and restart app on EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          pkill -f 'BuildAzan-0.0.1-SNAPSHOT.jar' || echo "App not running"
+          export MONGO_DB_URI=${{ secrets.MONGO_DB_URI }}
+          export MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+          export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+          export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
+          nohup java -jar /home/ec2-user/BuildAzan/BuildAzan-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          echo "App restarted!"
