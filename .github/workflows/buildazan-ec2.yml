@@ -2,21 +2,22 @@ name: Build and Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
-
-permissions:
-  contents: read
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
+    # Docker Hub credentials for the build job
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
     steps:
-      # 1. Check out your code
-      - name: Checkout code
+      - name: Checkout source
         uses: actions/checkout@v3
 
-      # 2. Cache Maven dependencies for faster builds
       - name: Cache Maven dependencies
         uses: actions/cache@v3
         with:
@@ -25,67 +26,59 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 3. Install JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: '17'
 
-      # 4. Build your JAR (skip tests)
-      - name: Build with Maven (skip tests)
-        run: mvn clean package -DskipTests
+      - name: Build Project (skip tests)
+        run: mvn clean install -DskipTests
 
-      # 5. Ensure the deploy directory exists on EC2
-      - name: Create deploy directory on EC2
+      - name: Log in to Docker Hub
+        run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+
+      - name: Build Docker image
+        run: docker build -t azan06/buildazan-rb:0.1 .
+
+      - name: Push image to Docker Hub
+        run: docker push azan06/buildazan-rb:0.1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Your runtime secrets made available to the deploy steps
+    env:
+      MONGO_DB_URI:      ${{ secrets.MONGO_DB_URI }}
+      MONGO_DB_NAME:     ${{ secrets.MONGO_DB_NAME }}
+      BREVO_API_KEY:     ${{ secrets.BREVO_API_KEY }}
+      BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
+
+    steps:
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          # give enough time for pulling/running the container
+          command_timeout: 3m
           script: |
-            mkdir -p /home/ec2-user/BuildAzan
+            # Pull the latest image
+            sudo docker pull azan06/buildazan-rb:0.1
 
-      # 6. Copy the JAR to EC2
-      - name: Copy JAR to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: target/BuildAzan-0.0.1-SNAPSHOT.jar
-          target: /home/ec2-user/BuildAzan/
+            # Remove old container (if any)
+            sudo docker rm -f buildazan-rb-container || true
 
-      # 7. SSH in and restart the app, fully detaching the process
-      - name: SSH and restart app on EC2
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          command_timeout: 5m
-          script: |
-            # Kill any existing instance
-            pkill -f 'BuildAzan-0.0.1-SNAPSHOT.jar' || echo "No existing process"
+            # Run the container, injecting env vars
+            sudo docker run -d \
+              -p 8080:8080 \
+              --name buildazan-rb-container \
+              -e MONGO_DB_URI="$MONGO_DB_URI" \
+              -e MONGO_DB_NAME="$MONGO_DB_NAME" \
+              -e BREVO_API_KEY="$BREVO_API_KEY" \
+              -e BREVO_SENDER_EMAIL="$BREVO_SENDER_EMAIL" \
+              azan06/buildazan-rb:0.1
 
-            # Wait briefly for port release
-            sleep 2
-
-            # Rotate old log file
-            LOG_DIR=/home/ec2-user/BuildAzan
-            TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-            [ -f "$LOG_DIR/app.log" ] && mv "$LOG_DIR/app.log" "$LOG_DIR/app.log.$TIMESTAMP"
-
-            # Export runtime secrets
-            export MONGO_DB_URI=${{ secrets.MONGO_DB_URI }}
-            export MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
-            export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-            export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
-
-            # Launch the JAR fully detached
-            nohup java -jar $LOG_DIR/BuildAzan-0.0.1-SNAPSHOT.jar \
-              > $LOG_DIR/app.log 2>&1 < /dev/null &
-            disown
-
-            echo "✅ App restarted at $(date)"
-            exit 0
+            echo "✅ Deployed at $(date)"
