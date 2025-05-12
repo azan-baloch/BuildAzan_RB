@@ -4,43 +4,84 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1. Check out your code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      # 2. Cache Maven dependencies
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-    - name: Build with Maven (skip tests)
-      run: mvn clean package -DskipTests
+      # 3. Set up JDK 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
 
-    - name: Copy JAR to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "target/BuildAzan-0.0.1-SNAPSHOT.jar"
-        target: "/home/ec2-user/BuildAzan"
+      # 4. Build your JAR (skip tests to speed up CI)
+      - name: Build with Maven (skip tests)
+        run: mvn clean package -DskipTests
 
-    - name: SSH and restart app on EC2
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          pkill -f 'BuildAzan-0.0.1-SNAPSHOT.jar' || echo "App not running"
-          export MONGO_DB_URI=${{ secrets.MONGO_DB_URI }}
-          export MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
-          export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-          export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
-          nohup java -jar /home/ec2-user/BuildAzan/BuildAzan-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-          echo "App restarted!"
+      # 5. Ensure deploy directory exists on EC2
+      - name: Create deploy directory on EC2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ec2-user/BuildAzan
+
+      # 6. Copy the JAR over
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: target/BuildAzan-0.0.1-SNAPSHOT.jar
+          target: /home/ec2-user/BuildAzan/
+
+      # 7. SSH in and restart the app
+      - name: SSH and restart app on EC2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Kill the old process if running
+            pkill -f 'BuildAzan-0.0.1-SNAPSHOT.jar' || echo "No existing process"
+
+            # Give the OS a moment to free up ports
+            sleep 2
+
+            # Rotate the previous log
+            LOG_DIR=/home/ec2-user/BuildAzan
+            TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+            [ -f "$LOG_DIR/app.log" ] && mv "$LOG_DIR/app.log" "$LOG_DIR/app.log.$TIMESTAMP"
+
+            # Export your secrets as env vars
+            export MONGO_DB_URI=${{ secrets.MONGO_DB_URI }}
+            export MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+            export BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+            export BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}
+
+            # Start the new JAR in the background
+            nohup java -jar $LOG_DIR/BuildAzan-0.0.1-SNAPSHOT.jar > $LOG_DIR/app.log 2>&1 &
+
+            echo "✅ App restarted at $(date)"
