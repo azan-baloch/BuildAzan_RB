@@ -64,24 +64,39 @@ public class SecurityConfig {
 
 	@Bean
 	CorsFilter corsFilter() {
-		CorsConfiguration corsConfiguration = new CorsConfiguration();
-		corsConfiguration.setAllowCredentials(true);
-		corsConfiguration.addAllowedHeader("*");
-		corsConfiguration.addAllowedMethod("*");
+	CorsConfiguration corsConfiguration = new CorsConfiguration();
+	corsConfiguration.setAllowCredentials(true);
+	corsConfiguration.addAllowedHeader("*");
+	corsConfiguration.addAllowedMethod("*");
 
-		return new CorsFilter(request -> {
-			String origin = request.getHeader("Origin");
+	return new CorsFilter(request -> {
+	String origin = request.getHeader("Origin");
 
-			if (origin != null && (origin.endsWith(".buildazan.com") || origin.equals("https://buildazan.com")
-					|| origin.equals("http://buildazan.com:5173") || origin.endsWith(".buildazan.com:5173"))) {
-				corsConfiguration.addAllowedOrigin(origin);
-			} else {
-				corsConfiguration.setAllowedOrigins(Collections.emptyList());
-			}
-
-			return corsConfiguration;
-		});
+	if (origin != null && (origin.endsWith(".buildazan.com") ||
+	origin.equals("https://buildazan.com")
+	|| origin.equals("http://buildazan.com:5173") ||
+	origin.endsWith(".buildazan.com:5173"))) {
+	corsConfiguration.addAllowedOrigin(origin);
+	} else {
+	corsConfiguration.setAllowedOrigins(Collections.emptyList());
 	}
+
+	return corsConfiguration;
+	});
+	}
+
+	// @Bean
+	// CorsFilter corsFilter() {
+	// 	CorsConfiguration corsConfiguration = new CorsConfiguration();
+	// 	corsConfiguration.setAllowCredentials(true); // Allow credentials like cookies, authorization headers
+	// 	corsConfiguration.addAllowedHeader("*"); // Allow all headers
+	// 	corsConfiguration.addAllowedMethod("*"); // Allow all methods (GET, POST, etc.)
+
+	// 	// Allow all origins
+	// 	corsConfiguration.addAllowedOrigin("*");
+
+	// 	return new CorsFilter(request -> corsConfiguration);
+	// }
 
 	@Bean
 	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)

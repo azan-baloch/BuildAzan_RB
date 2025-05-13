@@ -1,21 +1,17 @@
-# Stage 1: Build the application using Maven
-FROM maven:3.8.5-openjdk-17 AS build
-WORKDIR /app
-# Copy only pom.xml first for caching dependencies
-COPY pom.xml .
-# Download dependencies (cached if pom.xml hasn't changed)
-RUN mvn dependency:go-offline -B
-# Copy the rest of the application code
-COPY src ./src
-# Build the application and package it into a jar (skip tests for speed)
-RUN mvn clean package -DskipTests -B
+# Stage 1: Build the JAR (if you're using multi-stage builds)
+# Optional - skip if you already have the .jar built
 
-# Stage 2: Run the application with a lightweight JDK image
+# Stage 2: Runtime image
 FROM openjdk:17-jdk-slim
+
+# Set the working directory inside the container
 WORKDIR /app
-# Copy the jar from the build stage. Adjust the path/name if needed.
-COPY --from=build /app/target/BuildAzan-0.0.1-SNAPSHOT.jar app.jar
-# Expose the port your application listens on (usually 8080)
+
+# Copy the JAR file into the container (adjust the name as needed)
+COPY target/BuildAzan-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose the port your app runs on (usually 8080)
 EXPOSE 8080
-# Start the application
+
+# Run the JAR
 ENTRYPOINT ["java", "-jar", "app.jar"]
