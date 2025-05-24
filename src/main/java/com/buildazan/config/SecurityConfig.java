@@ -64,22 +64,18 @@ public class SecurityConfig {
 
 @Bean
 public CorsFilter corsFilter() {
-    return new CorsFilter(request -> {
-        String origin = request.getHeader("Origin");
-        CorsConfiguration config = new CorsConfiguration();
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowCredentials(true);
+    config.addAllowedOriginPattern("*");
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
 
-        config.setAllowCredentials(true);
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
 
-        // Allow any origin but only dynamically (required when credentials are true)
-        if (origin != null) {
-            config.addAllowedOrigin(origin);
-        }
-
-        return config;
-    });
+    return new CorsFilter(source);
 }
+
 
 
 	@Bean
