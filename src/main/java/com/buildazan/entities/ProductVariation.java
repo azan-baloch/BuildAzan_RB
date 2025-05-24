@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariation {
-	private Integer id;
+	private String id;
     private double price;
     private double discountPrice;
     private int stockQuantity;

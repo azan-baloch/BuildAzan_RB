@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.buildazan.entities.AttributeGroup;
 import com.buildazan.entities.Product;
 import com.buildazan.entities.ProductShipping;
 import com.buildazan.entities.ProductVariation;
@@ -111,20 +112,110 @@ public class ProductService {
         }
 
         String variationsJson = data.get("variations");
-    if (variationsJson != null && !variationsJson.isEmpty()) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            List<ProductVariation> variationsList = mapper.readValue(
-                    variationsJson, new TypeReference<List<ProductVariation>>() {});
-            product.setVariations(variationsList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        if (variationsJson != null && !variationsJson.isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<ProductVariation> variationsList = mapper.readValue(
+                        variationsJson, new TypeReference<List<ProductVariation>>() {});
+                product.setVariations(variationsList);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
         }
-    }
+
+        String attributeGroupsJson = data.get("attributeGroups");
+        if (attributeGroupsJson != null && !attributeGroupsJson.isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<AttributeGroup> attributeGroupList = mapper.readValue(
+                        attributeGroupsJson, new TypeReference<List<AttributeGroup>>() {});
+                product.setAttributeGroups(attributeGroupList);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
 
         return product;
     }
+
+public void createDefaultProducts(String storeId) {
+    ProductShipping defaultShipping = new ProductShipping("free-shipping", null);
+    String defaultStatus = "enabled";
+
+    List<Product> demoProducts = List.of(
+        new Product(
+            "Sport Runner X1 - Demo Product",
+            "demo-sport-runner-x1",
+            "High-performance running shoes for daily training and racing.",
+            450,
+            350,
+            "https://www.soloto.com/cdn/shop/products/1_ca14a7c2-de8c-4ca5-9aac-4b09130804a3.jpg?v=1662960848",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        ),
+        new Product(
+            "Urban Street 90 - Demo Product",
+            "demo-urban-street-90",
+            "Stylish streetwear sneakers for casual comfort and flair.",
+            500,
+            400,
+            "https://www.walkaroo.in/cdn/shop/files/3_e6e303ab-9323-405f-adc3-adde5d91761b.jpg?v=1740585734&width=500",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        ),
+        new Product(
+            "Trail Beast Pro - Demo Product",
+            "demo-trail-beast-pro",
+            "Durable trail shoes designed for off-road adventures.",
+            600,
+            480,
+            "https://trex.com.pk/uploads/trex/OHfZWNpOib7U2anEJZuhI7q8knVb94GoGJILHsQq.jpg",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        ),
+        new Product(
+            "Classic Leather Edge - Demo Product",
+            "demo-classic-leather-edge",
+            "Premium leather shoes for timeless elegance and comfort.",
+            700,
+            590,
+            "https://www.soloto.com/cdn/shop/products/1_f5cb92bd-5b6d-4dd2-8670-9aa90803cb9e.jpg?v=1664948564",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        ),
+        new Product(
+            "Flex Fit Trainer - Demo Product",
+            "demo-flex-fit-trainer",
+            "Versatile training shoes ideal for gym, sports, and everyday wear.",
+            420,
+            320,
+            "https://blackcamel.pk/cdn/shop/files/Untitled-1_5000x_89167fd3-b942-4f63-a6f2-b6fcf01ae083_540x.jpg?v=1691522165",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        ),
+        new Product(
+            "Aero Glide Max - Demo Product",
+            "demo-aero-glide-max",
+            "Lightweight performance sneakers engineered for speed and breathability.",
+            550,
+            430,
+            "https://example.com/images/aero-glide-max.jpg",
+            storeId,
+            defaultShipping,
+            defaultStatus
+        )
+    );
+
+    productRepo.saveAll(demoProducts);
+}
+
 
     public boolean saveProduct(Product product) {
         Product save = productRepo.save(product);

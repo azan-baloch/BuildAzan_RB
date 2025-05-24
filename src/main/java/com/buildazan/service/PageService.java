@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.buildazan.entities.Page;
 import com.buildazan.projection.GlobalContentProjection;
+import com.buildazan.projection.HomePageSeoProjection;
 import com.buildazan.projection.PagesProjection;
 import com.buildazan.repo.PageRepo;
 import com.buildazan.utils.DefaultPageTemplates;
@@ -119,6 +120,10 @@ public class PageService {
                                 .set("metaTitle", data.get("metaTitle"))
                                 .set("metaDescription", data.get("metaDescription"));
         mongoTemplate.updateFirst(query, update, Page.class);
+    }
+
+    public HomePageSeoProjection getHomePageSeo(String storeDomain){
+        return pageRepo.findHomePageSeo(storeDomain, "home");
     }
 
     public void updateHeader(Map<String, String> data){

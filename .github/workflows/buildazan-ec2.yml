@@ -44,41 +44,41 @@ jobs:
       - name: Push image to Docker Hub
         run: docker push azan06/buildazan-rb:0.1
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    # Your runtime secrets made available to the deploy steps
-    env:
-      MONGO_DB_URI:      ${{ secrets.MONGO_DB_URI }}
-      MONGO_DB_NAME:     ${{ secrets.MONGO_DB_NAME }}
-      BREVO_API_KEY:     ${{ secrets.BREVO_API_KEY }}
-      BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
-
-    steps:
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          # give enough time for pulling/running the container
-          command_timeout: 3m
-          script: |
-            # Pull the latest image
-            sudo docker pull azan06/buildazan-rb:0.1
-
-            # Remove old container (if any)
-            sudo docker rm -f buildazan-rb-container || true
-
-            # Run the container, injecting env vars
-            sudo docker run -d \
-              -p 8080:8080 \
-              --name buildazan-rb-container \
-              -e MONGO_DB_URI="$MONGO_DB_URI" \
-              -e MONGO_DB_NAME="$MONGO_DB_NAME" \
-              -e BREVO_API_KEY="$BREVO_API_KEY" \
-              -e BREVO_SENDER_EMAIL="$BREVO_SENDER_EMAIL" \
-              azan06/buildazan-rb:0.1
-
-            echo "✅ Deployed at $(date)"
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
+#
+#     # Your runtime secrets made available to the deploy steps
+#     env:
+#       MONGO_DB_URI:      ${{ secrets.MONGO_DB_URI }}
+#       MONGO_DB_NAME:     ${{ secrets.MONGO_DB_NAME }}
+#       BREVO_API_KEY:     ${{ secrets.BREVO_API_KEY }}
+#       BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
+#
+#     steps:
+#       - name: Deploy to EC2 via SSH
+#         uses: appleboy/ssh-action@v0.1.8
+#         with:
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ec2-user
+#           key: ${{ secrets.EC2_SSH_KEY }}
+#           # give enough time for pulling/running the container
+#           command_timeout: 3m
+#           script: |
+#             # Pull the latest image
+#             sudo docker pull azan06/buildazan-rb:0.1
+#
+#             # Remove old container (if any)
+#             sudo docker rm -f buildazan-rb-container || true
+#
+#             # Run the container, injecting env vars
+#             sudo docker run -d \
+#               -p 8080:8080 \
+#               --name buildazan-rb-container \
+#               -e MONGO_DB_URI="$MONGO_DB_URI" \
+#               -e MONGO_DB_NAME="$MONGO_DB_NAME" \
+#               -e BREVO_API_KEY="$BREVO_API_KEY" \
+#               -e BREVO_SENDER_EMAIL="$BREVO_SENDER_EMAIL" \
+#               azan06/buildazan-rb:0.1
+#
+#             echo "✅ Deployed at $(date)"

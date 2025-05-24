@@ -38,6 +38,9 @@ public class UserService{
     private PageService pageService;
 
     @Autowired
+    private ProductService productService;
+
+    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
@@ -80,15 +83,11 @@ public class UserService{
         store.setStoreId(new ObjectId().toString());
         store.setDomain(caredentials.get("storeName").toLowerCase().replaceAll(" ", "-") + ".buildazan.com");
         store.setUserId(user.getId());
+        store.setCurrency("PKR");
         mongoTemplate.save(user); 
         mongoTemplate.save(store);
         pageService.createDefaultPages(store.getStoreId(), store.getDomain());
-        
-        // CompletableFuture<User> userFuture = asyncService.saveUser(user);
-        // CompletableFuture<Void> storeFuture = asyncService.saveStore(store);
-        // CompletableFuture<Void> pageFuture = asyncService.saveDefaultPages(store.getStoreId());
-
-        // CompletableFuture.allOf(userFuture, storeFuture, pageFuture).join();
+        productService.createDefaultProducts(store.getStoreId());
 
         return user; 
     }

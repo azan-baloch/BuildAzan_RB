@@ -1,14 +1,10 @@
 package com.buildazan.restcontrollers;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.buildazan.entities.Store;
-import com.buildazan.projection.ProductProjection;
 import com.buildazan.projection.StoreProjection;
-import com.buildazan.service.ProductService;
 import com.buildazan.service.StoreService;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,31 +28,6 @@ public class StoreController {
 
     @Autowired
     private StoreService storeService;
-
-    @Autowired
-    private ProductService productService;
-
-    // @GetMapping("/get-store")
-    // public ResponseEntity<?> getStore(@RequestParam("userId") String userId) {
-    // Store store = storeService.findStoreByUserId(userId);
-    // return store != null ? ResponseEntity.ok(store)
-    // : ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-    // "error", "Store not found"));
-    // }
-
-    // @GetMapping("/find-store")
-    // public ResponseEntity<?> findStoreByDomain(@RequestParam("domain") String
-    // domain) {
-    // Store store = storeService.findByDomain(domain); 
-    // if (store == null) {
-    // return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
-    // "Store not found"));
-    // }
-    // List<ProductProjection> products =
-    // productService.getProductsByStoreId(store.getStoreId());
-    // return ResponseEntity.ok(Map.of("storeDetails", store, "products",
-    // products));
-    // }
 
     @PostMapping("/create-store")
     public ResponseEntity<?> createStore(@RequestBody Map<String, String> payload){

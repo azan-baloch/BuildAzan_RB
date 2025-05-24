@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.buildazan.entities.Page;
 import com.buildazan.projection.GlobalContentProjection;
+import com.buildazan.projection.HomePageSeoProjection;
 import com.buildazan.projection.PagesProjection;
 
 @Repository
@@ -19,6 +20,9 @@ public interface PageRepo extends MongoRepository<Page, String>{
 
     @Query(value = "{'storeDomain': ?0, 'slug': ?1}", fields = "{'globalContent': 1}") 
     public GlobalContentProjection findGlobalContentProjection(String storeDomain, String slug);
+
+    @Query(value = "{'storeDomain': ?0, 'slug': ?1}", fields = "{'metaTitle': 1, 'metaDescription': 1}") 
+    public HomePageSeoProjection findHomePageSeo(String storeDomain, String slug);
     // public void updatePageByStoreIdAndId(String storeId, String pageId);
     // public void deleteById(String pagedId);
 }

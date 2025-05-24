@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.buildazan.entities.Order;
+import com.buildazan.service.EmailService;
 import com.buildazan.service.OrderService;
 
 @RestController
@@ -23,6 +24,9 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody Order order) {
         try {
@@ -30,8 +34,10 @@ public class OrderController {
             order.setPaymentStatus("pending");
             order.setShippingStatus("processing");
             orderService.createOrder(order);
-            return ResponseEntity.ok().build();
+            emailService.sendOrderConfirmation(order.getEmail(), "balochazan36447@gmail.com", order);
+            return ResponseEntity.ok(order);
         } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         }

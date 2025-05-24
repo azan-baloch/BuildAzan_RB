@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.buildazan.entities.Page;
+import com.buildazan.projection.HomePageSeoProjection;
 import com.buildazan.service.PageService;
 
 @RestController
@@ -53,6 +54,7 @@ public class PageController {
     }
     @GetMapping("/get-page-by-domain")
     public ResponseEntity<?> getPageByDomain(@RequestParam String domain, @RequestParam String slug){
+        System.out.println("request recieved");
         try {   
             Optional<Page> page = pageService.getPageByDomainAndSlug(domain, slug);
             if (page.isPresent()) {
@@ -62,6 +64,7 @@ public class PageController {
                     .body(Map.of("error", "Page not found"));
             }
         } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occured on server, try again"));
         } 
@@ -157,6 +160,16 @@ public class PageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred on server, try again"));
         }
+    }
+
+    @GetMapping("/get-homepage-seo")
+    public ResponseEntity<?> getHomePageSeo(@RequestParam String storeDomain){
+        try {
+             return ResponseEntity.ok(pageService.getHomePageSeo(storeDomain)); 
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occured on server, try again"));
+        }   
     }
 
     @PutMapping("/update-header")

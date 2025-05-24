@@ -23,15 +23,20 @@ public class StoreService {
     @Autowired
     private PageService pageService;
 
+    @Autowired
+    ProductService productService;
+
     // public Store findStoreByUserId(String userId){  
     //     return storeRepo.findStoreByUserId(userId);
     // }
 
     @Transactional
     public void createStore(Store store){
-        System.out.println(store.getDomain());
+        store.setCurrency("PKR");
+        store.setStoreId(null);
         Store createdStore = storeRepo.save(store); 
         pageService.createDefaultPages(createdStore.getStoreId(), createdStore.getDomain());
+        productService.createDefaultProducts(createdStore.getStoreId());
     }
 
     public Optional<Store> findCurrentStoreById(String storeId){

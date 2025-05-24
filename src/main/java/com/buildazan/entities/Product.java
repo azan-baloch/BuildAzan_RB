@@ -49,6 +49,7 @@ public class Product {
     private String status;
     private boolean requiresShipping;
     private List<ProductVariation> variations;
+    private List<AttributeGroup> attributeGroups;
     //SEO
     private String seoTitle;
     private String metaDescription;
@@ -57,5 +58,17 @@ public class Product {
     private Map<String, Object> schemaMarkup;
     //Shipping
     private ProductShipping productShipping;
+
+    public Product(String name, String slug, String description, int price, int discountPrice, String productImage, String storeId, ProductShipping productShipping, String status) {
+        this.name = name;
+        this.slug = slug;
+        this.description = description;
+        this.price = price;
+        this.discountPrice = discountPrice;
+        this.productImage = productImage;
+        this.storeId = storeId;
+        this.productShipping = productShipping;
+        this.status = status;
+    }
 	
 }

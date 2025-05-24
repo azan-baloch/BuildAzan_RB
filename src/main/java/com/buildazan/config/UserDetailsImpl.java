@@ -1,5 +1,6 @@
 package com.buildazan.config;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -69,6 +70,10 @@ public class UserDetailsImpl implements UserDetails{
 	
 	public SubscriptionStatus getSubscriptionStatus() {
 		return user.getSubscriptionStatus();
+	}
+
+	public LocalDate getSubscriptionEndDate() {
+		return user.getSubscriptionEndDate();
 	}
 	
 	public boolean isEmailVerified() {

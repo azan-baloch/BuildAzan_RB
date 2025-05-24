@@ -27,7 +27,7 @@ public class EmailService {
 
     private final String fromEmail;          // Verified sender email in Brevo
     private final String brevoApiKey;          
-    private final String templatePath = "emails/";
+    private final String templatePath = "templates/emails/";
 
     public EmailService(@Value("${brevo.api.key}") String brevoApiKey,
                         @Value("${brevo.sender.email}") String fromEmail) {
@@ -78,7 +78,7 @@ public class EmailService {
     }
 
     private String formatShippingAddress(Order order) {
-        return String.format("%s, %s, %s %s, %s",
+        return String.format("%s, %s, %s, %s",
                 order.getAddress(),
                 order.getCity(),
                 order.getPostalCode(),

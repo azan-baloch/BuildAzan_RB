@@ -1,5 +1,6 @@
 package com.buildazan.restcontrollers;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -47,7 +48,7 @@ public class AuthController {
     private VerificationService verificationService;
 
     @GetMapping("/check-auth")
-    public ResponseEntity<?> checkAuth() { 
+    public ResponseEntity<?> checkAuth() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -61,18 +62,29 @@ public class AuthController {
         // "error", "Step 1/2. Verify your email",
         // "redirectTo", "/verify-email"));
         // }
-         if (userDetails.getSubscriptionStatus().equals(SubscriptionStatus.NONE)
-        ||
-        userDetails.getSubscriptionStatus().equals(SubscriptionStatus.UNPAID) ||
-        userDetails.getSubscriptionStatus().equals(SubscriptionStatus.TRIAL_EXPIRED) ||
-        userDetails.getMemberShipLevel().equals(MemberShipLevel.NONE)) {
-        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
-        "error", "Choose your plan or start free trial",
-        "redirectTo", "/billing",
-        "userId", userDetails.getUserId(),
-        "subscriptionStatus", userDetails.getSubscriptionStatus(),
-        "memberShipLevel", userDetails.getMemberShipLevel()));
+        LocalDate today = LocalDate.now();
+        LocalDate subsEndDate = userDetails.getSubscriptionEndDate();
+        SubscriptionStatus currentStatus = userDetails.getSubscriptionStatus();
+
+        if (subsEndDate != null) {
+            if (currentStatus == SubscriptionStatus.TRIAL && today.isAfter(subsEndDate)) {
+                currentStatus = SubscriptionStatus.TRIAL_EXPIRED;
+            } else if (currentStatus == SubscriptionStatus.PAID && today.isAfter(subsEndDate)) {
+                currentStatus = SubscriptionStatus.UNPAID;
+            }
         }
+
+        if (currentStatus == SubscriptionStatus.NONE
+                || currentStatus == SubscriptionStatus.UNPAID
+                || currentStatus == SubscriptionStatus.TRIAL_EXPIRED) {
+            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of(
+                    "error", "Choose your plan or start free trial",
+                    "redirectTo", "/billing",
+                    "userId", userDetails.getUserId(),
+                    "subscriptionStatus", currentStatus,
+                    "memberShipLevel", userDetails.getMemberShipLevel()));
+        }
+
         return ResponseEntity.ok(Map.of("isAuthorized", true, "userId", userDetails.getUserId()));
     }
 
@@ -109,7 +121,8 @@ public class AuthController {
             } catch (Exception e) {
                 System.out.println("Email not sent: " + e);
             }
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(details.get("username"), details.get("password")));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(details.get("username"), details.get("password")));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
             String jwt = jwtService.generateJwtToken(userDetailsImpl);

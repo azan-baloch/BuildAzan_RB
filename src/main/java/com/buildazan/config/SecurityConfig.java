@@ -75,6 +75,7 @@ public class SecurityConfig {
 	if (origin != null && (origin.endsWith(".buildazan.com") ||
 	origin.equals("https://buildazan.com")
 	|| origin.equals("http://buildazan.com:5173") ||
+	origin.equals("http://192.168.103.138:5173") ||
 	origin.endsWith(".buildazan.com:5173"))) {
 	corsConfiguration.addAllowedOrigin(origin);
 	} else {
