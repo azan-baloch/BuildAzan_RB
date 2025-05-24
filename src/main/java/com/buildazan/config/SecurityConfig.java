@@ -62,42 +62,25 @@ public class SecurityConfig {
 		return new MongoTransactionManager(databaseFactory);
 	}
 
-	@Bean
-	CorsFilter corsFilter() {
-	CorsConfiguration corsConfiguration = new CorsConfiguration();
-	corsConfiguration.setAllowCredentials(true);
-	corsConfiguration.addAllowedHeader("*");
-	corsConfiguration.addAllowedMethod("*");
+@Bean
+public CorsFilter corsFilter() {
+    return new CorsFilter(request -> {
+        String origin = request.getHeader("Origin");
+        CorsConfiguration config = new CorsConfiguration();
 
-	return new CorsFilter(request -> {
-	String origin = request.getHeader("Origin");
+        config.setAllowCredentials(true);
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
 
-	if (origin != null && (origin.endsWith(".buildazan.com") ||
-	origin.equals("https://buildazan.com")
-	|| origin.equals("http://buildazan.com:5173") ||
-	origin.equals("http://192.168.103.138:5173") ||
-	origin.endsWith(".buildazan.com:5173"))) {
-	corsConfiguration.addAllowedOrigin(origin);
-	} else {
-	corsConfiguration.setAllowedOrigins(Collections.emptyList());
-	}
+        // Allow any origin but only dynamically (required when credentials are true)
+        if (origin != null) {
+            config.addAllowedOrigin(origin);
+        }
 
-	return corsConfiguration;
-	});
-	}
+        return config;
+    });
+}
 
-	// @Bean
-	// CorsFilter corsFilter() {
-	// 	CorsConfiguration corsConfiguration = new CorsConfiguration();
-	// 	corsConfiguration.setAllowCredentials(true); // Allow credentials like cookies, authorization headers
-	// 	corsConfiguration.addAllowedHeader("*"); // Allow all headers
-	// 	corsConfiguration.addAllowedMethod("*"); // Allow all methods (GET, POST, etc.)
-
-	// 	// Allow all origins
-	// 	corsConfiguration.addAllowedOrigin("*");
-
-	// 	return new CorsFilter(request -> corsConfiguration);
-	// }
 
 	@Bean
 	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
